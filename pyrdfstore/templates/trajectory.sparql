@@ -1,0 +1,18 @@
+{#
+    This Template is used to make a SPARQL query that will return the objects of a given property trajectory.
+    The property trajectory is defined by a list of subjects and a property.
+    This list will be concatenated by /
+    This template takes in 2 parameters:
+        - "subject" : The URI of the property
+        - "property_trajectory" : A list of the URIs of the subjects of the trajectory
+        - "prefixes": A dict of the prefixes used in the query
+#}
+
+{% for prefix, uri in prefixes.items() %}
+PREFIX {{ prefix }}: {{ uri }}
+{% endfor %}
+
+SELECT ?o
+WHERE {
+        <{{ subject }}> {{ property_trajectory }} ?o .
+    }

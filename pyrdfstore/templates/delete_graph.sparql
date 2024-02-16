@@ -1,0 +1,10 @@
+{#
+    This template is used to generate SPARQL DELETE WHERE queries.
+    This template takes 1 parameter:
+     - context: the context from which the data is to be deleted. If none is given, all data is deleted.
+#}
+{% if context %}
+DELETE WHERE {
+ GRAPH <{{ context }}> { ?s ?p ?o }
+}
+{% endif %}

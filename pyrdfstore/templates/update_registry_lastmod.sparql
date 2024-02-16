@@ -1,0 +1,25 @@
+{# 
+    This template generates a SPARQL query to update a context in an admin graph.
+    
+    Variables:
+    - registry_of_lastmod_context: The IRI of the registry graph that will keep track of last modification dates.
+    - context: The IRI of the context to update.
+    - lastmod: The new modification date. If provided, the context will be inserted again with this date.
+    
+#}
+
+PREFIX schema: <https://schema.org/>
+WITH <{{ registry_of_lastmod_context }}>
+DELETE {
+    <{{ context }}> schema:dateModified ?date .
+}
+INSERT {
+    {% if lastmod %}
+        <{{ context }}> schema:dateModified {{ lastmod | xsd('xsd:datetime') }} .
+    {% endif %}
+}
+WHERE {   
+    OPTIONAL { {# Optional wrapper is needed because if no date is found no insert will be executed #}
+        <{{ context }}> schema:dateModified ?date .
+    }
+}

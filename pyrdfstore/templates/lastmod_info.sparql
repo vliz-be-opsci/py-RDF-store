@@ -1,0 +1,9 @@
+{#
+    This template is used to generate SPARQL SELECT queries.
+    This template takes 1 parameter:
+     - registry_of_lastmod_context: the context from which the data is to be selected
+#}
+
+SELECT ?graph ?lastmod WHERE {
+    GRAPH <{{ registry_of_lastmod_context }}> { ?graph <https://schema.org/dateModified> ?lastmod }
+}
