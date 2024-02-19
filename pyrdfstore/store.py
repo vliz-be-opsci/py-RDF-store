@@ -57,7 +57,7 @@ class URITargetStore(TargetStore):
             endpoint=read_uri,
             updateEndpoint=write_uri or read_uri,
             returnFormat=JSON,
-            agent="pytravharv-sparql-client",
+            agent="python-sparql-client",
         )
         self.client.method = "POST"
         self._qryBuilder = qryBuilder
@@ -99,7 +99,7 @@ class URITargetStore(TargetStore):
         vars = {
             "context": context,
             "lastmod": lastmod,
-            "registry_of_lastmod_context": "urn:PYTRAVHARV:ADMIN",
+            "registry_of_lastmod_context": "urn:PYTHONRDFSTORECLIENT:ADMIN",
         }
 
         query = self._qryBuilder.build_syntax(
@@ -111,7 +111,7 @@ class URITargetStore(TargetStore):
 
     def lastmod_for_context(self, context: str) -> datetime:
         vars = {
-            "registry_of_lastmod_context": "urn:PYTRAVHARV:ADMIN",
+            "registry_of_lastmod_context": "urn:PYTHONRDFSTORECLIENT:ADMIN",
         }
         query = self._qryBuilder.build_syntax("lastmod_info.sparql", **vars)
 
@@ -202,7 +202,7 @@ class TargetStoreAccess:
 
     def verify(self, subject, property_path):
         sparql = self._qryBuilder.build_syntax(
-            "TODO template name", subject=subject, property_path=property_path
+            "trajectory.sparql", subject=subject, property_path=property_path
         )
         result: SPARQLResult = self._target.select(sparql)
         return bool(len(result.bindings) > 0)
