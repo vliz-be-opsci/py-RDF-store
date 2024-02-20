@@ -2,7 +2,6 @@ from pyrdfstore.store import (
     RDFStore,
     MemoryRDFStore,
     URIRDFStore,
-    RDFStoreAccess,
 )
 from pyrdfstore.common import QUERY_BUILDER
 from typing import Optional, List
