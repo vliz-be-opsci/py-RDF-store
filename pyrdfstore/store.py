@@ -5,6 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 from SPARQLWrapper import JSON, SPARQLWrapper
 from pyrdfj2 import J2RDFSyntaxBuilder
+from pyrdfstore.common import QUERY_BUILDER
 import logging
 from functools import reduce
 
@@ -54,7 +55,6 @@ class URIRDFStore(RDFStore):
 
     def __init__(
         self,
-        qryBuilder: J2RDFSyntaxBuilder,
         read_uri: str,
         write_uri: Optional[str] = None,
     ):
@@ -66,7 +66,7 @@ class URIRDFStore(RDFStore):
             agent="python-sparql-client",
         )
         self.client.method = "POST"
-        self._qryBuilder = qryBuilder
+        self._qryBuilder = QUERY_BUILDER
 
     def select(self, sparql: str) -> SPARQLResult:
         self.client.setQuery(sparql)

@@ -18,16 +18,10 @@ def create_rdf_store(rdf_store_info: Optional[List[str]] = None) -> RDFStore:
 
     if rdf_store_info == None:
         return MemoryRDFStore()
-
+    # else
     if len(rdf_store_info) == 1:
-        return URIRDFStore(
-            qryBuilder=QUERY_BUILDER,
-            read_uri=rdf_store_info[0],
-            write_uri=rdf_store_info[0],
-        )
-
+        rdf_store_info.append(rdf_store_info[0])
     return URIRDFStore(
-        qryBuilder=QUERY_BUILDER,
         read_uri=rdf_store_info[0],
         write_uri=rdf_store_info[1],
     )
