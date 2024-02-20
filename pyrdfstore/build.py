@@ -7,10 +7,14 @@ from pyrdfstore.common import QUERY_BUILDER
 from typing import Optional, List
 from pyrdfj2 import J2RDFSyntaxBuilder
 import os
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def create_rdf_store(rdf_store_info: Optional[List[str]] = None) -> RDFStore:
     if rdf_store_info != None:
+        log.debug(len(rdf_store_info))
         assert (
             len(rdf_store_info) > 2
         ), "Invalid number of arguments. Max 2 arguments are allowed"
