@@ -225,5 +225,5 @@ class RDFStoreAccess:
     def ingest(self, graph: Graph, named_graph: str):
         self._target.insert(graph, named_graph)
 
-    # def lastmod_for_named_graph(self, named_graph: str) -> datetime:
-    #    return self._target.lastmod_for_named_graph(named_graph)
+    def verify_max_age(self, named_graph: str, age_minutes: int) -> bool:
+        return self._target.verify_max_age(named_graph, age_minutes)
