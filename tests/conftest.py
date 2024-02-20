@@ -1,24 +1,24 @@
 import pytest
 import os
-from pyrdfstore.store import URITargetStore, MemoryTargetStore
+from pyrdfstore.store import URIRDFStore, MemoryRDFStore
 from rdflib import Graph
 from pyrdfj2 import J2RDFSyntaxBuilder
 from pyrdfstore.common import QUERY_BUILDER
 
 
 @pytest.fixture()
-def target_store():
+def rdf_store():
     read_uri = os.getenv("TEST_SPARQL_READ_URI")
     write_uri = os.getenv("TEST_SPARQL_WRITE_URI")
     if read_uri is not None:
-        return URITargetStore(QUERY_BUILDER, read_uri, write_uri)
+        return URIRDFStore(QUERY_BUILDER, read_uri, write_uri)
     # else
-    return MemoryTargetStore()
+    return MemoryRDFStore()
 
 
 @pytest.fixture()
-def prepopulated_target_store(target_store):
+def prepopulated_rdf_store(rdf_store):
     graph = Graph()
     graph.parse("tests/input/3293.jsonld", format="json-ld")
-    target_store.insert(graph)
-    return target_store
+    rdf_store.insert(graph)
+    return rdf_store

@@ -15,26 +15,32 @@ def timestamp():
     return datetime.utcnow().isoformat()
 
 
-class TargetStore(ABC):
+class RDFStore(ABC):
     @abstractmethod
     def select(self, sparql: str) -> SPARQLResult:
         pass
 
     @abstractmethod
-    def insert(self, graph: Graph, context: Optional[str] = None) -> None:
+    def insert(self, graph: Graph, named_graph: Optional[str] = None) -> None:
         pass
 
-    def verify_max_age(self, context: str, age_minutes: int) -> bool:
-        context_lastmod = self.lastmod_for_context(context)
+    def verify_max_age(self, named_graph: str, age_minutes: int) -> bool:
+        named_graph_lastmod = self.lastmod_for_named_graph(named_graph)
         ts = datetime.utcnow()
-        return bool((ts - context_lastmod).total_seconds() <= age_minutes * 60)
+        return bool(
+            (ts - named_graph_lastmod).total_seconds() <= age_minutes * 60
+        )
 
     @abstractmethod
-    def lastmod_for_context(self, context: str) -> datetime:
+    def lastmod_for_named_graph(self, named_graph: str) -> datetime:
+        pass
+
+    @abstractmethod
+    def drop_graph(self, named_graph: str) -> None:
         pass
 
 
-class URITargetStore(TargetStore):
+class URIRDFStore(RDFStore):
     """ "
     This class is used to connect to a SPARQL endpoint and execute SPARQL queries
 
@@ -80,12 +86,11 @@ class URITargetStore(TargetStore):
         result = SPARQLResult(result_mapped)
         return result
 
-    def insert(self, graph: Graph, context: Optional[str] = None):
-        # TODO push the graph into the store - and manage the context
-        batches = URITargetStore._graph_to_batches(graph)
+    def insert(self, graph: Graph, named_graph: Optional[str] = None):
+        batches = URIRDFStore._graph_to_batches(graph)
 
         for batch in batches:
-            vars = {"context": context, "raw_triples": batch}
+            vars = {"context": named_graph, "raw_triples": batch}
             query = self._qryBuilder.build_syntax(
                 "insert_graph.sparql", **vars
             )
@@ -93,11 +98,11 @@ class URITargetStore(TargetStore):
             self.client.query()
 
             lastmod = timestamp()
-            self._update_registry_lastmod(lastmod, context)
+            self._update_registry_lastmod(lastmod, named_graph)
 
-    def _update_registry_lastmod(self, lastmod: str, context: str):
+    def _update_registry_lastmod(self, lastmod: str, named_graph: str):
         vars = {
-            "context": context,
+            "context": named_graph,
             "lastmod": lastmod,
             "registry_of_lastmod_context": "urn:PYTHONRDFSTORECLIENT:ADMIN",
         }
@@ -109,7 +114,7 @@ class URITargetStore(TargetStore):
         self.client.setQuery(query)
         self.client.query()
 
-    def lastmod_for_context(self, context: str) -> datetime:
+    def lastmod_for_named_graph(self, named_graph: str) -> datetime:
         vars = {
             "registry_of_lastmod_context": "urn:PYTHONRDFSTORECLIENT:ADMIN",
         }
@@ -117,8 +122,14 @@ class URITargetStore(TargetStore):
 
         self.client.setQuery(query)
         result = self.client.query().convert()
-        all_results = URITargetStore._convert_result_to_datetime(result)
-        return all_results[context]
+        all_results = URIRDFStore._convert_result_to_datetime(result)
+        return all_results[named_graph]
+
+    def drop_graph(self, named_graph: str) -> None:
+        vars = {"context": named_graph}
+        query = self._qryBuilder.build_syntax("delete_graph.sparql", **vars)
+        self.client.setQuery(query)
+        self.client.query()
 
     @staticmethod
     def _convert_result_to_datetime(result):
@@ -165,7 +176,7 @@ class URITargetStore(TargetStore):
         return reduce(regroup, unique_triples, [""])
 
 
-class MemoryTargetStore(TargetStore):
+class MemoryRDFStore(RDFStore):
     def __init__(self):
         self._all: Graph = Graph()
         self._named_graphs = dict()
@@ -174,23 +185,27 @@ class MemoryTargetStore(TargetStore):
     def select(self, sparql: str) -> SPARQLResult:
         return self._all.query(sparql)
 
-    def insert(self, graph: Graph, context: Optional[str] = None):
-        context_graph = None
-        if context is not None:
-            if context not in self._named_graphs:
-                self._named_graphs[context] = Graph()
-            context_graph: Graph = self._named_graphs[context]
-            context_graph += graph
-            self._admin_registry[context] = timestamp()
+    def insert(self, graph: Graph, named_graph: Optional[str] = None):
+        named_graph_graph = None
+        if named_graph is not None:
+            if named_graph not in self._named_graphs:
+                self._named_graphs[named_graph] = Graph()
+            named_graph_graph: Graph = self._named_graphs[named_graph]
+            named_graph_graph += graph
+            self._admin_registry[named_graph] = timestamp()
         self._all += graph
 
-    def lastmod_for_context(self, context: str) -> datetime:
-        return self._admin_registry[context]
+    def lastmod_for_named_graph(self, named_graph: str) -> datetime:
+        return self._admin_registry[named_graph]
+
+    def drop_graph(self, named_graph: str) -> None:
+        self._named_graphs.pop(named_graph, None)
+        self._admin_registry.pop(named_graph, None)
 
 
-class TargetStoreAccess:
+class RDFStoreAccess:
 
-    def __init__(self, target: TargetStore, qryBuilder: J2RDFSyntaxBuilder):
+    def __init__(self, target: RDFStore, qryBuilder: J2RDFSyntaxBuilder):
         self._target = target
         self._qryBuilder = qryBuilder
 
@@ -207,8 +222,8 @@ class TargetStoreAccess:
         result: SPARQLResult = self._target.select(sparql)
         return bool(len(result.bindings) > 0)
 
-    def ingest(self, graph: Graph, context: str):
-        self._target.insert(graph, context)
+    def ingest(self, graph: Graph, named_graph: str):
+        self._target.insert(graph, named_graph)
 
-    # def lastmod_for_context(self, context: str) -> datetime:
-    #    return self._target.lastmod_for_context(context)
+    # def lastmod_for_named_graph(self, named_graph: str) -> datetime:
+    #    return self._target.lastmod_for_named_graph(named_graph)

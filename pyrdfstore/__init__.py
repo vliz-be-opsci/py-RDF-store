@@ -7,6 +7,6 @@
 .. moduleauthor:: Vliz VZW open science <opsci@vliz.be>
 """
 
-from .rdfstore import TargetStoreFactory
+from .rdfstore import create_rdf_store
 
-__all__ = ["TargetStoreFactory"]
+__all__ = ["create_rdf_store"]

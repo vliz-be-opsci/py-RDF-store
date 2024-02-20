@@ -3,25 +3,25 @@ from util4tests import run_single_test
 import pytest
 import os
 from string import ascii_lowercase
-from pyrdfstore.store import TargetStoreAccess, TargetStore, URITargetStore
+from pyrdfstore.store import RDFStoreAccess, RDFStore, URIRDFStore
 import math
 import random
 from rdflib import Graph, URIRef
 from pyrdfstore.common import QUERY_BUILDER
 
 
-@pytest.mark.usefixtures("target_store")
-def test_ingest(target_store):
+@pytest.mark.usefixtures("rdf_store")
+def test_ingest(rdf_store):
     pass
 
 
-@pytest.mark.usefixtures("prepopulated_target_store")
-def test_select_subjects(prepopulated_target_store):
+@pytest.mark.usefixtures("prepopulated_rdf_store")
+def test_select_subjects(prepopulated_rdf_store):
     assert (
-        prepopulated_target_store is not None
+        prepopulated_rdf_store is not None
     ), "can't perform test without target store"
     sparql = "SELECT ?subject ?p WHERE { ?subject ?p ?o }"
-    tsa = TargetStoreAccess(prepopulated_target_store, QUERY_BUILDER)
+    tsa = RDFStoreAccess(prepopulated_rdf_store, QUERY_BUILDER)
     subjects = tsa.select_subjects(sparql)
     assert isinstance(subjects, list)
     assert len(subjects) > 0
@@ -49,7 +49,7 @@ def test_graph_to_batches():
     assert (
         len(graph) == cnt
     ), "we should have not created duplicate or missing triples"
-    batches = URITargetStore._graph_to_batches(graph)
+    batches = URIRDFStore._graph_to_batches(graph)
     assert len(batches) > 0
     # total number of batches should be 260
     assert (
