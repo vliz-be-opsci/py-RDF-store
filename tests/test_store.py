@@ -66,5 +66,46 @@ def test_graph_to_batches():
     ), f"all batches should be of size {expected_sizes} not {found_sizes}"
 
 
+@pytest.mark.usefixtures("rdf_store")
+def test_insert(rdf_store):
+    assert rdf_store is not None, "can't perform test without target store"
+
+    # Create a test graph
+    graph = Graph()
+    graph.add(
+        (
+            URIRef("http://example.org/subject1"),
+            URIRef("http://example.org/predicate1"),
+            URIRef("http://example.org/object1"),
+        )
+    )
+    graph.add(
+        (
+            URIRef("http://example.org/subject2"),
+            URIRef("http://example.org/predicate2"),
+            URIRef("http://example.org/object2"),
+        )
+    )
+
+    # Call the insert method
+    rdf_store.insert(graph)
+
+    # Verify that the triples are inserted correctly
+    sparql = "SELECT ?subject ?predicate ?object WHERE { ?subject ?predicate ?object }"
+    tsa = RDFStoreAccess(rdf_store, QUERY_BUILDER)
+    results = tsa.select_subjects(sparql)
+    assert len(results) == 2
+    assert (
+        URIRef("http://example.org/subject1"),
+        URIRef("http://example.org/predicate1"),
+        URIRef("http://example.org/object1"),
+    ) in results
+    assert (
+        URIRef("http://example.org/subject2"),
+        URIRef("http://example.org/predicate2"),
+        URIRef("http://example.org/object2"),
+    ) in results
+
+
 if __name__ == "__main__":
     run_single_test(__file__)

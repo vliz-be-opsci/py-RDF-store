@@ -11,9 +11,10 @@ import os
 
 
 def create_rdf_store(rdf_store_info: Optional[List[str]] = None) -> RDFStore:
-    assert (
-        len(rdf_store_info) > 2
-    ), "Invalid number of arguments. Max 2 arguments are allowed"
+    if rdf_store_info != None:
+        assert (
+            len(rdf_store_info) > 2
+        ), "Invalid number of arguments. Max 2 arguments are allowed"
 
     if rdf_store_info == None:
         return MemoryRDFStore()
