@@ -4,7 +4,6 @@ from rdflib.plugins.sparql.processor import SPARQLResult
 from typing import Optional, List
 from datetime import datetime
 from SPARQLWrapper import JSON, SPARQLWrapper
-from pyrdfj2 import J2RDFSyntaxBuilder
 from pyrdfstore.common import QUERY_BUILDER
 import logging
 from functools import reduce
@@ -43,14 +42,12 @@ class RDFStore(ABC):
 
 class URIRDFStore(RDFStore):
     """ "
-    This class is used to connect to a SPARQL endpoint and execute SPARQL queries
-
-    :param qryBuilder: helper for building sparql from templates
-    :type qryBuilder: J2RDFSyntaxBuilder
-    :param readURI: The URI of the SPARQL endpoint to read from
-    :type readURI: str
-    :param writeURI: The URI of the SPARQL endpoint to write to. If not provided, the readURI will be used.
-    :type writeURI: Optional[str]
+        This class is used to connect to a SPARQL endpoint and execute SPARQL queries
+    S
+        :param readURI: The URI of the SPARQL endpoint to read from
+        :type readURI: str
+        :param writeURI: The URI of the SPARQL endpoint to write to. If not provided, the readURI will be used.
+        :type writeURI: Optional[str]
     """
 
     def __init__(
@@ -201,29 +198,3 @@ class MemoryRDFStore(RDFStore):
     def drop_graph(self, named_graph: str) -> None:
         self._named_graphs.pop(named_graph, None)
         self._admin_registry.pop(named_graph, None)
-
-
-class RDFStoreAccess:
-
-    def __init__(self, target: RDFStore, qryBuilder: J2RDFSyntaxBuilder):
-        self._target = target
-        self._qryBuilder = qryBuilder
-
-    def select_subjects(self, sparql) -> List[str]:
-        result: SPARQLResult = self._target.select(sparql)
-        # todo convert response into list of subjects
-        list_of_subjects = [row[0] for row in result]
-        return list_of_subjects
-
-    def verify(self, subject, property_path):
-        sparql = self._qryBuilder.build_syntax(
-            "trajectory.sparql", subject=subject, property_path=property_path
-        )
-        result: SPARQLResult = self._target.select(sparql)
-        return bool(len(result.bindings) > 0)
-
-    def ingest(self, graph: Graph, named_graph: str):
-        self._target.insert(graph, named_graph)
-
-    def verify_max_age(self, named_graph: str, age_minutes: int) -> bool:
-        return self._target.verify_max_age(named_graph, age_minutes)
