@@ -16,8 +16,10 @@ def create_rdf_store(rdf_store_info: Optional[List[str]] = None) -> RDFStore:
     if rdf_store_info != None:
         log.debug(len(rdf_store_info))
         assert (
-            len(rdf_store_info) > 2
-        ), "Invalid number of arguments. Max 2 arguments are allowed"
+            len(rdf_store_info) >= 2
+        ), "Invalid number of arguments. Max 2 arguments are allowed, {} were provided".format(
+            len(rdf_store_info)
+        )
 
     if rdf_store_info == None:
         return MemoryRDFStore()
