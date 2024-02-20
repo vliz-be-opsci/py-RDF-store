@@ -196,5 +196,6 @@ class MemoryRDFStore(RDFStore):
         return self._admin_registry[named_graph]
 
     def drop_graph(self, named_graph: str) -> None:
+        self._all -= self._named_graphs[named_graph]
         self._named_graphs.pop(named_graph, None)
         self._admin_registry.pop(named_graph, None)
