@@ -26,6 +26,8 @@ class RDFStore(ABC):
 
     def verify_max_age(self, named_graph: str, age_minutes: int) -> bool:
         named_graph_lastmod = self.lastmod_for_named_graph(named_graph)
+        if named_graph_lastmod is None:
+            return False
         ts = datetime.utcnow()
         return bool(
             (ts - named_graph_lastmod).total_seconds() <= age_minutes * 60
@@ -120,7 +122,10 @@ class URIRDFStore(RDFStore):
         self.client.setQuery(query)
         result = self.client.query().convert()
         all_results = URIRDFStore._convert_result_to_datetime(result)
-        return all_results[named_graph]
+        try:
+            return all_results[named_graph]
+        except:
+            return None
 
     def drop_graph(self, named_graph: str) -> None:
         vars = {"context": named_graph}
