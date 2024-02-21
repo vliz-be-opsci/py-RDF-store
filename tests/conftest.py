@@ -1,8 +1,7 @@
 import pytest
 import os
 from pyrdfstore.store import URIRDFStore, MemoryRDFStore
-from rdflib import Graph
-from pyrdfj2 import J2RDFSyntaxBuilder
+from rdflib import Graph, URIRef
 from pyrdfstore.common import QUERY_BUILDER
 
 
@@ -22,3 +21,13 @@ def prepopulated_rdf_store(rdf_store):
     graph.parse("tests/input/3293.jsonld", format="json-ld")
     rdf_store.insert(graph)
     return rdf_store
+
+
+@pytest.fixture()
+def example_graphs():
+    def make_ex_grph(n: int) -> Graph:
+        g = Graph()
+        triple = tuple(URIRef(f"https://example.org/{part}#{n}") for part in ["subject", "predicate", "object"])
+        g.add(triple)
+        return g
+    return [make_ex_grph(i) for i in range(10)]
