@@ -6,7 +6,7 @@ from typing import List, Tuple
 import math
 import random
 from rdflib import Graph, URIRef
-from pyrdfstore.store import RDFStore, URIRDFStore, SPARQLResult
+from pyrdfstore.store import RDFStore, URIRDFStore
 from logging import getLogger
 
 
@@ -16,14 +16,17 @@ log = getLogger("tests")
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
 def test_fixtures(rdf_store: RDFStore, example_graphs: List[Graph]):
     assert rdf_store is not None, "fixture rdf-store should be available."
-    assert example_graphs is not None, "fixture example_graphs should be available"
+    assert (
+        example_graphs is not None
+    ), "fixture example_graphs should be available"
     assert (len(example_graphs) == 10)
 
 
 def test_graph_to_batches():
     graph = Graph()
+    # we want to chunk-up to result in equal sized groups by having each line this short
     groupsize = 2
-    max_line = math.floor(4096 / groupsize)  # we want chunk-up to result in equal sized groups by having each line this short
+    max_line = math.floor(4096 / groupsize)
     stuffing = "<> <> <> . \n"   # the overhead chars that will be added
     available_len = max_line - len(stuffing)
     # Add a bunch of triples to the graph
@@ -33,8 +36,8 @@ def test_graph_to_batches():
             j = math.floor(random.randint(0, available_len) / 3)
             uri_lengths = [i, j, available_len - (i + j)]
             # Create the list
-            triple = [URIRef(c * int(uri_lengths[k])) for k in range(3)]
-            graph.add((triple[0], triple[1], triple[2]))
+            triple = tuple(URIRef(c * int(uri_lengths[k])) for k in range(3))
+            graph.add(triple)
             cnt += 1
 
     log.debug(f"{len(graph)=}")
@@ -70,12 +73,21 @@ def test_insert(rdf_store, example_graphs):
 
     # Verify that the triples are inserted correctly
     sparql = "SELECT ?subject ?predicate ?object WHERE { ?subject ?predicate ?object }"
-    results: List[Tuple[str]] = [tuple(str(u) for u in r) for r in rdf_store.select(sparql)]
+    # reformat SPARQLResult as List of Tuple of uri-str
+    results: List[Tuple[str]] = [
+        tuple(str(u) for u in r) for r in rdf_store.select(sparql)
+    ]
 
     assert len(results) == num_triples
     log.debug(f"{results=}")
     for i in range(num_triples):
-        assert tuple(f"https://example.org/{part}#{i}" for part in ["subject", "predicate", "object"]) in results
+        assert (
+            tuple(
+                f"https://example.org/{part}#{i}"
+                for part in ["subject", "predicate", "object"]
+            )
+            in results
+        )
 
 
 if __name__ == "__main__":
