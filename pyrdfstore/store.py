@@ -165,9 +165,11 @@ class URIRDFStore(RDFStore):
             line = line.strip()
             if len(line) == 0:
                 return groups
-            assert (
-                len(line) < max_str_size
-            ), "single line exceeds max_batch_size"
+
+            if len(line) >= max_str_size:
+                log.warning(f"Triple exceeds max_str_size: {line}")
+                return groups
+
             if (
                 len(line) + len(groups[-1]) > max_str_size
             ):  # if this new line can't fit into the current last
