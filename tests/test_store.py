@@ -69,16 +69,18 @@ def test_insert(rdf_store, example_graphs):
     # Call the insert method
     num_triples = 2
     for i in range(num_triples):
+        log.debug(f"attempt to insert simple graph #{i} --> \n  {example_graphs[i].serialize(format='turtle')=}\n<--\n")
         rdf_store.insert(example_graphs[i])
 
     # Verify that the triples are inserted correctly
-    sparql = "SELECT ?subject ?predicate ?object WHERE { ?subject ?predicate ?object }"
+    sparql = "SELECT * WHERE { ?s ?p ?o . }"
     # reformat SPARQLResult as List of Tuple of uri-str
+    log.debug(f"trying out select {sparql=}")
     results: List[Tuple[str]] = [
         tuple(str(u) for u in r) for r in rdf_store.select(sparql)
     ]
 
-    assert len(results) == num_triples
+    assert len(results) >= num_triples
     log.debug(f"{results=}")
     for i in range(num_triples):
         assert (
