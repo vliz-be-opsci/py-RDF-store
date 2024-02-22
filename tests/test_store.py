@@ -103,16 +103,14 @@ def test_insert_large_statement(rdf_store, example_graphs):
 
     # Read large statement 
     g = Graph().parse("./tests/input/marineinfo-publication-246614.ttl", format='turtle')
-    pub_abstr = ""
-    for part in g.objects(predicate=URIRef("http://purl.org/dc/terms/#abstract")):
-        pub_abstr += str(part)
+    pub_abstr = "".join([str(part) for part in g.objects(predicate=URIRef("http://purl.org/dc/terms/#abstract"))])
     log.debug(f"{pub_abstr=}")
 
     # Call the insert method
     rdf_store.insert(g, "<urn:test:publ246614>")
     
     # Verify that the large statement is parsed correctly
-    sparql = "SELECT ?abstract FROM <urn:test:publ246614> WHERE { [] <http://purl.org/dc/terms/#abstract> ?abstract }"
+    sparql = "SELECT ?abstract WHERE { [] <http://purl.org/dc/terms/#abstract> ?abstract }"
     results: List[Tuple[str]] = [tuple(str(u) for u in r) for r in rdf_store.select(sparql)]
     log.debug(f"{sparql=}")
     log.debug(f"{results=}")
