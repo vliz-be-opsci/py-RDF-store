@@ -21,7 +21,7 @@ loggers:
   __main__:
     level: DEBUG
     propagate: yes
-  pytravharv:
+  pyrdfstore:
     level: DEBUG
     propagate: yes
   tests:
