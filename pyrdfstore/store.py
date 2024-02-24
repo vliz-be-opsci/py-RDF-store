@@ -129,10 +129,7 @@ class URIRDFStore(RDFStore):
         self.client.setQuery(query)
         result = self.client.query().convert()
         all_results = URIRDFStore._convert_result_to_datetime(result)
-        try:
-            return all_results[named_graph]
-        except:
-            return None
+        return all_results.get(named_graph, None)
 
     def drop_graph(self, named_graph: str) -> None:
         vars = {"context": named_graph}
