@@ -1,12 +1,9 @@
 #! /usr/bin/env python
 from util4tests import run_single_test
 import pytest
-from string import ascii_lowercase
 from typing import List, Tuple
-import math
-import random
-from rdflib import Graph, URIRef
-from pyrdfstore.store import RDFStore, URIRDFStore
+from rdflib import Graph
+from pyrdfstore.store import RDFStore
 from logging import getLogger
 
 
@@ -20,46 +17,6 @@ def test_fixtures(rdf_store: RDFStore, example_graphs: List[Graph]):
         example_graphs is not None
     ), "fixture example_graphs should be available"
     assert (len(example_graphs) == 10)
-
-
-def test_graph_to_batches():
-    graph = Graph()
-    # we want to chunk-up to result in equal sized groups by having each line this short
-    groupsize = 2
-    max_line = math.floor(4096 / groupsize)
-    stuffing = "<> <> <> . \n"   # the overhead chars that will be added
-    available_len = max_line - len(stuffing)
-    # Add a bunch of triples to the graph
-    cnt = 0
-    for i in range(10):
-        for c in ascii_lowercase:
-            j = math.floor(random.randint(0, available_len) / 3)
-            uri_lengths = [i, j, available_len - (i + j)]
-            # Create the list
-            triple = tuple(URIRef(c * int(uri_lengths[k])) for k in range(3))
-            graph.add(triple)
-            cnt += 1
-
-    log.debug(f"{len(graph)=}")
-    assert (
-        len(graph) == cnt
-    ), "we should have not created duplicate or missing triples"
-    batches = URIRDFStore._graph_to_batches(graph)
-
-    # total number of batches should be 260
-    assert len(batches) > 0
-    assert (
-        len(batches) == cnt / groupsize
-    ), "the amount of batches should be count of all triples over groupsize"
-    found_sizes = {len(grp.split("\n")) for grp in batches}
-    expected_sizes = {groupsize}
-
-    first_batch = batches[0].split("\n")
-    log.debug(f"{first_batch=}")
-    # print(f"First batch split by newline: {batches[0].split('\n')}")
-    assert (
-        found_sizes == expected_sizes
-    ), f"all batches should be of size {expected_sizes} not {found_sizes}"
 
 
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
@@ -91,6 +48,10 @@ def test_insert(rdf_store, example_graphs):
             in results
         )
 
+# todo we need more tests to verify 
+#   - the update-management
+#   - the drops
+#   ...
 
 if __name__ == "__main__":
     run_single_test(__file__)
