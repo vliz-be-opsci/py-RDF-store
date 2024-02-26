@@ -1,0 +1,87 @@
+@prefix bibo: <http://purl.org/ontology/bibo/#> .
+@prefix cld: <http://purl.org/cld/terms/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dct: <http://purl.org/dc/terms/#> .
+@prefix dcmitype: <http://purl.org/dc/dcmitype/#> .
+@prefix dbo: <http://dbpedia.org/ontology/#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix freq: <http://purl.org/cld/freq/> .
+@prefix locn: <http://www.w3.org/ns/locn#> .
+@prefix org: <http://www.w3.org/ns/org#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix time: <http://www.w3.org/2006/time#> .
+@prefix unit: <http://qudt.org/vocab/unit/#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix mi: <http://www.marineinfo.org/ns/ontology#> .
+@prefix mibc: <http://marineinfo.org/ns/library/bibcodes#> .
+@prefix mibt: <http://marineinfo.org/ns/library/bibtypes#> . 
+@prefix mir: <http://marineinfo.org/ns/person/roles#> .
+@prefix miprog: <http://marineinfo.org/ns/progress#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+@base <http://dev.marineinfo.org/id/publication/246614> .
+
+
+<>
+        a dct:BibliographicResource, schema:CreativeWork, dcat:Resource ; 
+            dct:type 'Book/Monograph'^^xsd:string ;
+                        mi:hasBibType 'Dissertation'^^xsd:string ;
+                    mi:hasBibLvlCode ''^^xsd:string ;
+                        dct:created  '2015-05-13'^^xsd:date ;
+    dct:modified  '2017-01-25'^^xsd:date ;
+            dct:title 'Microscale spatial distributions of microbes in marine intertidal sediments andphotosynthetic microbial mats'^^xsd:string ;
+            dct:abstract 'Marine sedimentary habitats generally have their highest microbial activity in the top few centimeters. Where light reaches the sediments, benthic oxygenic photoautotrophs grow and the organic matter released is decomposed in a series ofdifferent metabolic pathways by heterotrophic prokaryotes. If grazing pressure is low (or absent), as found more often in extreme environments such as hot springs, high salinity environments and sediments with periodic desiccation, hotosynthetic microbial mats may be formed. Microbial mats are permanently vertically laminated microbial communities, with the top photosynthetic layer composed of cyanobacteria and benthic eukaryotic microalgae (such as diatoms). Much work has been doneregarding the physico-chemical parameters structuring the microbial activity, but to my knowledge there are no reports on microscale (µm to mm) abundance distributions of viruses, prokaryotes and oxygenic photoautotrophs in benthic systems. It is, however, essential to collect samples at the scale relevant for microbial activity. Moreover, it is important to improve our understanding of which underlying factors, other than bottom-up (e.g. physico-chemical variables such as organic matter, light, temperature), regulate the spatial distribution of key members of benthic ecosystems.In this thesis, I show that viruses and prokaryotes in a tidal sediment from Dunstaffnage Bay, Scotland, distribute heterogeneously both at horizontal and vertical mm scale. Furthermore, it was also shown that the dynamic viral activity over time contributed to the microscale heterogeneity observed (Chapter 2). To be able to examine microscale distributions of viruses and prokaryotes in photosynthetic microbial mats an improved method for extracting viruses and prokaryotes from thesemats with their high load of organic matter was developed (Chapter 3). The method also provided better results when applied to the sediment. Furthermore, the newly developed method could be successfully combined with flow cytometry, thereby providing a fast and accurate method that can help opening the research field of viral ecology in microbial mats. Application of this method to intertidal microbial mats from the Wadden Sea island Schiermonnikoog, The Netherlands, also showed microscaleheterogeneity in prokaryotic and viral abundances, the latter amongst the highest recorded (1.5 ± 1.5 x 1010 viruses g-1) in natural benthic habitats (Chapter 5). Viral and prokaryotic abundances were related to the depth of the oxygenicphotoautotrophic layer between the sampled periods (November 2012, April, and July 2013). Microscale observation and distinction of the two main oxygenic photoautotrophic groups (cyanobacteria and diatoms) in microbial mats was possibledue to the development of a new, fast and non-intrusive, method using photoautotrophic group-specific autofluorescence imaging (Chapter 4). Applying the method in the field displayed patchy populations of cyanobacteria and diatoms at the µm to mm spatial scale. These findings will have implications on the localproductivity, as cyanobacteria have different productivity rates from diatoms. Considering that grazing pressure is typically low in microbial mats, I have focused on other factors (viruses and fungi) that may affect variability in (microscale) spatial and temporal distribution of the major groups of oxygenic photoautotrophs.The high viral abundances found in the microbial mats indicated that viruses could be significant players in the mats as potential mortality agents for prokaryotes and oxygenic photoautotrophs (Chapter 5), with particularly high abundances in the photosynthetic layer compared to the heterotrophic layers below. The fungus Emericellopsis sp. was found to affect the spatial distribution of oxygenic photoautotrophs by degrading benthic cyanobacteria and diatoms, during summer and autumn (Chapter 6). Consequently, small (2 - 5 cm) ring-like clearings in the photosynthetic microbial mat occurred that were re-colonised firstly by the diatoms. Fungal activity thus influenced not only oxygenic photoautotrophic speciesdistribution and diversity (via degradation), but also succession and subsequently is expected to have an effect on the productivity of the photosynthetic microbial mat.Overall, it was observed that microbes (prokaryotes and oxygenicphotoautotrophs) in microbial mats and intertidal sediments can be distributed at µm to mm scales. Mortality agents, such as viruses and fungi, were found relevant underlying factors for the observed microscale spatial distributions. Based on thesefindings more research on interactions between these mortality agents (viruses and fungi) and the dominant benthic microbial groups is desired. This would improve our understanding of their role in species diversity and succession, as well as the extentto which these mortality factors affect biogeochemical cycling within the microbial mats.'@en ;
+                dct:bibliographicCitation '<b>Carreira , C.</b> (2015). Microscale spatial distributions of microbes in marine intertidal sediments andphotosynthetic microbial mats. PhD Thesis. UvA: Amsterdam.  152 pp. <a href="http://hdl.handle.net/11245/1.471593" target="_blank">hdl.handle.net/11245/1.471593</a>'^^xsd:string ;
+                                            dbo:isPeerReviewed 'false'^^xsd:boolean ;
+                schema:isAccessibleForFree 'true'^^xsd:boolean ;
+        
+                
+                            schema:author [
+            a schema:Person ;
+                            schema:givenName 'Cátia'^^xsd:string ;
+                                        schema:familyName 'Carreira'^^xsd:string;
+                                        schema:identifier </id/person/29675> ;
+                                        schema:affiliation </id/institute/13655> ;
+                        ] ;
+            
+        
+                
+                                        dct:references [
+                a schema:CreativeWork ;
+                dct:type 'Handle'^^xsd:string ;
+                schema:accessURL <http://hdl.handle.net/11245/1.471593> ;
+                ] ;                
+                        
+        
+        
+        
+        
+        
+        
+                        dct:isPartOf </id/collection/805> ;
+                                
+        
+        
+        
+                schema:datePublished '2015'^^xsd:date ;
+                schema:pagination '152'^^xsd:integer ;
+                    
+                    bibo:pages '152'^^xsd:string ;
+            
+    
+
+    
+    
+                    .
+
+     </id/collection/805>
+    a dcmitype:Collection, schema:Collection ;
+    dct:title 'Koninklijk Nederlands Instituut voor Onderzoek der Zee'^^xsd:string ;
+    dct:identifier '805'^^xsd:string ;
+.
+        
