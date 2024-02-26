@@ -8,6 +8,7 @@ from pyrdfstore.common import QUERY_BUILDER
 import logging
 from functools import reduce
 
+
 log = logging.getLogger(__name__)
 
 
@@ -68,10 +69,11 @@ class URIRDFStore(RDFStore):
         self._qryBuilder = QUERY_BUILDER
 
     def select(self, sparql: str) -> SPARQLResult:
+        log.debug(f"exec select {sparql=}")
         self.client.setQuery(sparql)
         self.client.setReturnFormat(JSON)
         result = self.client.query().convert()
-        log.debug("results_dict: {}".format(result))
+        log.debug(f"from SQLWrapper :: {type(result)=} -> {result=}")
 
         # given that a SPARQLResult object is expected, convert the result to a SPARQLResult object
         result_mapped = {
@@ -83,6 +85,7 @@ class URIRDFStore(RDFStore):
         }
 
         result = SPARQLResult(result_mapped)
+        log.debug(f"after mapping :: {type(result)=} -> {result=}")
         return result
 
     def insert(self, graph: Graph, named_graph: Optional[str] = None):
@@ -93,11 +96,13 @@ class URIRDFStore(RDFStore):
             query = self._qryBuilder.build_syntax(
                 "insert_graph.sparql", **vars
             )
+            log.debug(f"exec batch {query=}")
             self.client.setQuery(query)
             self.client.query()
 
             lastmod = timestamp()
-            self._update_registry_lastmod(lastmod, named_graph)
+            if named_graph is not None and len(named_graph) > 0:
+                self._update_registry_lastmod(lastmod, named_graph)
 
     def _update_registry_lastmod(self, lastmod: str, named_graph: str):
         vars = {
@@ -110,6 +115,7 @@ class URIRDFStore(RDFStore):
             "update_registry_lastmod.sparql", **vars
         )
 
+        log.debug(f"exec lastmod update {query=}")
         self.client.setQuery(query)
         self.client.query()
 
@@ -119,6 +125,7 @@ class URIRDFStore(RDFStore):
         }
         query = self._qryBuilder.build_syntax("lastmod_info.sparql", **vars)
 
+        log.debug(f"exec lastmod read {query=}")
         self.client.setQuery(query)
         result = self.client.query().convert()
         all_results = URIRDFStore._convert_result_to_datetime(result)
@@ -130,6 +137,7 @@ class URIRDFStore(RDFStore):
     def drop_graph(self, named_graph: str) -> None:
         vars = {"context": named_graph}
         query = self._qryBuilder.build_syntax("delete_graph.sparql", **vars)
+        log.debug(f"exec drop {query=}")
         self.client.setQuery(query)
         self.client.query()
 

@@ -1,16 +1,18 @@
 import pytest
 import os
 from pyrdfstore.store import URIRDFStore, MemoryRDFStore
+from pyrdfstore.build import create_rdf_store
+
 from rdflib import Graph, URIRef
-from pyrdfstore.common import QUERY_BUILDER
 
 
 @pytest.fixture()
 def rdf_store():
-    read_uri = os.getenv("TEST_SPARQL_READ_URI")
-    write_uri = os.getenv("TEST_SPARQL_WRITE_URI")
+    read_uri = os.getenv("TEST_SPARQL_READ_URI", None)
+    write_uri = os.getenv("TEST_SPARQL_WRITE_URI", None)
+    return create_rdf_store(read_uri, write_uri)
     if read_uri is not None:
-        return URIRDFStore(QUERY_BUILDER, read_uri, write_uri)
+        return URIRDFStore(read_uri, write_uri)
     # else
     return MemoryRDFStore()
 
