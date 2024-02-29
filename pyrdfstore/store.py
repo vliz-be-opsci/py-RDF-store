@@ -1,11 +1,11 @@
-from abc import ABC, abstractmethod
-from rdflib import Graph, URIRef, Literal, Namespace
-from rdflib.query import Result
-from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
-from typing import Optional
-from datetime import datetime
 import logging
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Optional
 
+from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
+from rdflib.query import Result
 
 log = logging.getLogger(__name__)
 
@@ -20,13 +20,14 @@ def timestamp():
 
 
 class RDFStore(ABC):
-    """ This interface describes the basic contract for having read, write operations versus a 
+    """This interface describes the basic contract for having read, write operations versus a
     managed set of named-graphs so that the lastmod timestamp on each of these is being tracked properly
     so the 'age' of these can be compared easily to decide on required or oportune updates
     """
+
     @abstractmethod
     def select(self, sparql: str, named_graph: Optional[str]) -> Result:
-        """ executes a sparql select query, possibly narrowed to the named_grap it represents
+        """executes a sparql select query, possibly narrowed to the named_grap it represents
 
         :param sparql: the query-statement to execute
         :type sparql: str
@@ -39,7 +40,7 @@ class RDFStore(ABC):
 
     @abstractmethod
     def insert(self, graph: Graph, named_graph: Optional[str] = None) -> None:
-        """ inserts the triples from the passed graph into the suggested named_graph
+        """inserts the triples from the passed graph into the suggested named_graph
 
         :param graph: the graph of triples to insert
         :type graph: Graph
@@ -50,7 +51,7 @@ class RDFStore(ABC):
         pass
 
     def verify_max_age(self, named_graph: str, age_minutes: int) -> bool:
-        """ verifies that a certain graph is not aged older than a certain amount of minutes
+        """verifies that a certain graph is not aged older than a certain amount of minutes
         (as this just uses self.lastmod_ts() implementations should just get that right and simply inherit this)
 
         :param named_graph: the uri describing the named_graph to check the age of
@@ -94,7 +95,7 @@ class RDFStore(ABC):
 
 
 class URIRDFStore(RDFStore):
-    """ This class is used to connect to a SPARQL endpoint and execute SPARQL queries
+    """This class is used to connect to a SPARQL endpoint and execute SPARQL queries
 
     :param read_uri: The URI of the SPARQL endpoint to read from
     :type read_uri: str
@@ -109,13 +110,20 @@ class URIRDFStore(RDFStore):
         if write_uri is None:
             self.sparql_store = SPARQLStore(query_endpoint=read_uri)
         else:
-            self.sparql_store = SPARQLUpdateStore(query_endpoint=read_uri, update_endpoint=write_uri, method='POST', autocommit=True)
+            self.sparql_store = SPARQLUpdateStore(
+                query_endpoint=read_uri,
+                update_endpoint=write_uri,
+                method="POST",
+                autocommit=True,
+            )
             self.allows_update = True
 
     def select(self, sparql: str, named_graph: Optional[str] = None) -> Result:
         log.debug(f"exec select {sparql=} into {named_graph=}")
         if named_graph is not None:
-            select_graph = Graph(store=self.sparql_store, identifier=named_graph)
+            select_graph = Graph(
+                store=self.sparql_store, identifier=named_graph
+            )
         else:
             select_graph = Graph(store=self.sparql_store)
         result: Result = select_graph.query(sparql)
@@ -123,18 +131,26 @@ class URIRDFStore(RDFStore):
         return result
 
     def insert(self, graph: Graph, named_graph: Optional[str] = NIL_NS):
-        assert self.allows_update, "data can not be inserted into a store if no write_uri is provided"
+        assert (
+            self.allows_update
+        ), "data can not be inserted into a store if no write_uri is provided"
         log.debug(f"insertion of {len(graph)=} into ({named_graph=})")
         store_graph = Graph(store=self.sparql_store, identifier=named_graph)
         store_graph += graph.skolemize()
         self._update_registry_lastmod(named_graph, timestamp())
 
-    def _update_registry_lastmod(self, named_graph: str, lastmod: datetime = None) -> None:
+    def _update_registry_lastmod(
+        self, named_graph: str, lastmod: datetime = None
+    ) -> None:
         graph_subject = URIRef(named_graph)
 
-        store_graph = Graph(store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH)
+        store_graph = Graph(
+            store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH
+        )
         # remove any previous triple for this graph
-        pattern = tuple((graph_subject, SCHEMA_DATEMODIFIED, None))  # missing object functions as pattern
+        pattern = tuple(
+            (graph_subject, SCHEMA_DATEMODIFIED, None)
+        )  # missing object functions as pattern
         store_graph.remove(pattern)
         # and insert the new one if provided
         if lastmod is None:
@@ -144,8 +160,12 @@ class URIRDFStore(RDFStore):
         store_graph.add(triple)
 
     def lastmod_ts(self, named_graph: str) -> datetime:
-        adm_graph = Graph(store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH)
-        lastmod: Literal = adm_graph.value(URIRef(named_graph), SCHEMA_DATEMODIFIED)
+        adm_graph = Graph(
+            store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH
+        )
+        lastmod: Literal = adm_graph.value(
+            URIRef(named_graph), SCHEMA_DATEMODIFIED
+        )
         # above is None if nothing found, else convert the literal to actual .value (datetime)
         return lastmod.value if lastmod is not None else None
 
@@ -163,7 +183,11 @@ class MemoryRDFStore(RDFStore):
         self._admin_registry = dict()
 
     def select(self, sparql: str, named_graph: Optional[str] = None) -> Result:
-        target = self._named_graphs[named_graph] if named_graph is not None else self._all
+        target = (
+            self._named_graphs[named_graph]
+            if named_graph is not None
+            else self._all
+        )
         return target.query(sparql)
 
     def insert(self, graph: Graph, named_graph: Optional[str] = None):

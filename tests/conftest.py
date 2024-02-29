@@ -1,9 +1,10 @@
-import pytest
 import os
-from pyrdfstore.store import URIRDFStore, MemoryRDFStore
-from pyrdfstore.build import create_rdf_store
 
+import pytest
 from rdflib import Graph, URIRef
+
+from pyrdfstore.build import create_rdf_store
+from pyrdfstore.store import MemoryRDFStore, URIRDFStore
 
 
 @pytest.fixture()
@@ -29,7 +30,11 @@ def prepopulated_rdf_store(rdf_store):
 def example_graphs():
     def make_ex_grph(n: int) -> Graph:
         g = Graph()
-        triple = tuple(URIRef(f"https://example.org/{part}#{n}") for part in ["subject", "predicate", "object"])
+        triple = tuple(
+            URIRef(f"https://example.org/{part}#{n}")
+            for part in ["subject", "predicate", "object"]
+        )
         g.add(triple)
         return g
+
     return [make_ex_grph(i) for i in range(10)]

@@ -1,14 +1,15 @@
 #! /usr/bin/env python
-from util4tests import run_single_test
-import pytest
-from typing import List, Tuple
-from rdflib import Graph, Namespace, URIRef
-from pyrdfstore.store import RDFStore
 from logging import getLogger
-from time import sleep
-from uuid import uuid4
 from pathlib import Path
+from time import sleep
+from typing import List, Tuple
+from uuid import uuid4
 
+import pytest
+from rdflib import Graph, Namespace, URIRef
+from util4tests import run_single_test
+
+from pyrdfstore.store import RDFStore
 
 log = getLogger("tests")
 DCT: Namespace = Namespace("http://purl.org/dc/terms/#")
@@ -23,7 +24,7 @@ def test_fixtures(rdf_store: RDFStore, example_graphs: List[Graph]):
     assert (
         example_graphs is not None
     ), "fixture example_graphs should be available"
-    assert (len(example_graphs) == 10)
+    assert len(example_graphs) == 10
 
 
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
@@ -32,7 +33,9 @@ def test_insert(rdf_store: RDFStore, example_graphs: List[Graph]):
     # Call the insert method
     nums = range(2)
     for i in nums:
-        log.debug(f"attempt to insert simple graph #{i} --> \n  {example_graphs[i].serialize(format='turtle')=}\n<--\n")
+        log.debug(
+            f"attempt to insert simple graph #{i} --> \n  {example_graphs[i].serialize(format='turtle')=}\n<--\n"
+        )
         rdf_store.insert(example_graphs[i])
 
     # Verify that the triples are inserted correctly
@@ -62,25 +65,26 @@ def test_unkown_drop(rdf_store: RDFStore):
     rdf_store.drop_graph(ns)
     # we should just get here without an error
     # and we should have a trace of its delete
-    assert rdf_store.verify_max_age(ns, 1), f"named_graph {ns=} latest change should be traceable"
+    assert rdf_store.verify_max_age(
+        ns, 1
+    ), f"named_graph {ns=} latest change should be traceable"
 
 
 def format_from_extension(fpath: Path):
     sfx = fpath.suffix
-    sfmap = {
-        ".ttl": "turtle",
-        ".jsonld": "json-ld"
-    }
+    sfmap = {".ttl": "turtle", ".jsonld": "json-ld"}
     return sfmap[sfx]
 
 
 def assert_file_ingest(
-        rdf_store: RDFStore,
-        fpath: Path,
-        sparql_test: str = None,
-        expected_count: int = None
+    rdf_store: RDFStore,
+    fpath: Path,
+    sparql_test: str = None,
+    expected_count: int = None,
 ):
-    assert fpath.exists(), f"can not test insertion of non-existent file {fpath=}"
+    assert (
+        fpath.exists()
+    ), f"can not test insertion of non-existent file {fpath=}"
     ns = f"urn:test:{fpath.stem}"
     log.debug(f"testing ingest of {fpath=} into {ns=}")
 
@@ -101,7 +105,9 @@ def assert_file_ingest(
         expected_count = num_triples
 
     result = rdf_store.select(sparql_test, ns)
-    assert len(result) == expected_count, f"test after insert of {fpath=} into {ns=} did not yield {expected_count=}"
+    assert (
+        len(result) == expected_count
+    ), f"test after insert of {fpath=} into {ns=} did not yield {expected_count=}"
 
     return fg, ns, result
 
@@ -123,10 +129,17 @@ def test_insert_large_statement(rdf_store: RDFStore):
 
     sparql = f"SELECT ?abstract WHERE {{ [] <{ DCT_ABSTRACT }> ?abstract }}"
     # check the ingest of a turtle file with one really large value in the dct:abstract
-    g, ns, result = assert_file_ingest(rdf_store, TEST_INPUT_FOLDER / "marineinfo-publication-246614.ttl", sparql, 1)
+    g, ns, result = assert_file_ingest(
+        rdf_store,
+        TEST_INPUT_FOLDER / "marineinfo-publication-246614.ttl",
+        sparql,
+        1,
+    )
 
     # check the inserted large abstract from before insert
-    pub_abstr = "".join([str(part) for part in g.objects(predicate=DCT_ABSTRACT)])
+    pub_abstr = "".join(
+        [str(part) for part in g.objects(predicate=DCT_ABSTRACT)]
+    )
     log.debug(f"{len(pub_abstr)=}")
 
     # Verify that the large content rountripped nicely
@@ -137,10 +150,10 @@ def test_insert_large_statement(rdf_store: RDFStore):
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
 def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
 
-    # this test plans to create 2 named_graphs, 
+    # this test plans to create 2 named_graphs,
     # so they contain some overlapped ranges from the example_graphs fixture
     plans = [
-        dict(ns=f"urn:test-space:{ i }", nums=range(3*i, 4*i+1))
+        dict(ns=f"urn:test-space:{ i }", nums=range(3 * i, 4 * i + 1))
         for i in range(2)
     ]
     # we always look for all triples in the graph
@@ -148,8 +161,8 @@ def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
 
     # insert the selected range per ns
     for plan in plans:
-        ns = plan['ns']
-        nums = plan['nums']
+        ns = plan["ns"]
+        nums = plan["nums"]
         g = Graph()
         for num in nums:
             g += example_graphs[num]
@@ -173,22 +186,30 @@ def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
             ), f"expected triple for index { i } not found in result"
 
     for plan in plans:
-        assert rdf_store.verify_max_age(ns, 1), "graphs should be inserted and checked in less then a minute"
+        assert rdf_store.verify_max_age(
+            ns, 1
+        ), "graphs should be inserted and checked in less then a minute"
 
     sleep(60)  # hey, seriuosly? wait a minute!
     for plan in plans:
-        assert not rdf_store.verify_max_age(ns, 1), "after a minute of nothing, those should be older then a minute"
+        assert not rdf_store.verify_max_age(
+            ns, 1
+        ), "after a minute of nothing, those should be older then a minute"
 
     # now drop the second graph, and check for the (should be none!) effect on the first
-    ns1, nums1 = plans[0]['ns'], plans[0]['nums']
-    ns2 = plans[1]['ns']
+    ns1, nums1 = plans[0]["ns"], plans[0]["nums"]
+    ns2 = plans[1]["ns"]
     rdf_store.drop_graph(ns2)
-    assert rdf_store.verify_max_age(ns2, 1), "dropped graph should be marked as changed again"
+    assert rdf_store.verify_max_age(
+        ns2, 1
+    ), "dropped graph should be marked as changed again"
 
     # there should be nothing left in ns2
     try:
         result = rdf_store.select(sparql, ns2)
-    except Exception:  # accept that this could also throw an exception since the graph was dropped!
+    except (
+        Exception
+    ):  # accept that this could also throw an exception since the graph was dropped!
         result = []
     assert len(result) == 0, "there should be no results in a dropped ns"
 
@@ -196,7 +217,9 @@ def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
     result: List[Tuple[str]] = [
         tuple(str(u) for u in r) for r in rdf_store.select(sparql, ns1)
     ]
-    assert len(result) == len(nums1), "there should still be same results in the kept ns"
+    assert len(result) == len(
+        nums1
+    ), "there should still be same results in the kept ns"
     for i in nums1:
         assert (
             tuple(
@@ -210,7 +233,9 @@ def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
     result: List[Tuple[str]] = [
         tuple(str(u) for u in r) for r in rdf_store.select(sparql)
     ]
-    assert len(result) >= len(nums1), "there should be at least same results in the overall store"
+    assert len(result) >= len(
+        nums1
+    ), "there should be at least same results in the overall store"
     for i in nums1:
         assert (
             tuple(
