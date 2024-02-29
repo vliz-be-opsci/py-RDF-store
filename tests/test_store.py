@@ -6,12 +6,15 @@ from rdflib import Graph, Namespace, URIRef
 from pyrdfstore.store import RDFStore
 from logging import getLogger
 from time import sleep
+from uuid import uuid4
+from pathlib import Path
 
 
 log = getLogger("tests")
 DCT: Namespace = Namespace("http://purl.org/dc/terms/#")
 DCT_ABSTRACT: URIRef = DCT.abstract
 SELECT_ALL_SPO = "SELECT ?s ?p ?o WHERE { ?s ?p ?o . }"
+TEST_INPUT_FOLDER = Path(__file__).parent / "./input"
 
 
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
@@ -53,52 +56,89 @@ def test_insert(rdf_store: RDFStore, example_graphs: List[Graph]):
 
 
 @pytest.mark.usefixtures("rdf_store")
-def test_insert_large(rdf_store: RDFStore):
-    assert rdf_store is not None, "can't perform test without target store"
+def test_unkown_drop(rdf_store: RDFStore):
+    ns = f"urn:test:uuid:{uuid4()}"
+    log.debug(f"trying to drop non-existant {ns=}")
+    rdf_store.drop_graph(ns)
+    # we should just get here without an error
+    # and we should have a trace of its delete
+    assert rdf_store.verify_max_age(ns, 1), f"named_graph {ns=} latest change should be traceable"
 
-    ns = "urn:test:large-turtle-test"
 
-    # Read large file
-    lg = Graph().parse("./tests/input/AffiliationInfo.ttl", format='turtle')
-    num_triples = len(lg)
-    log.debug(f"{num_triples}")
+def format_from_extension(fpath: Path):
+    sfx = fpath.suffix
+    sfmap = {
+        ".ttl": "turtle",
+        ".jsonld": "json-ld"
+    }
+    return sfmap[sfx]
 
-    # Call the insert method
-    rdf_store.insert(lg, ns)
 
-    # Verify that the triples are parsed correctly
-    sparql = SELECT_ALL_SPO
-    results: List[Tuple[str]] = [tuple(str(u) for u in r) for r in rdf_store.select(sparql, ns)]
+def assert_file_ingest(
+        rdf_store: RDFStore,
+        fpath: Path,
+        sparql_test: str = None,
+        expected_count: int = None
+):
+    assert fpath.exists(), f"can not test insertion of non-existent file {fpath=}"
+    ns = f"urn:test:{fpath.stem}"
+    log.debug(f"testing ingest of {fpath=} into {ns=}")
 
-    assert len(results) == num_triples
+    # clear it to avoid effects from previous tests
+    log.debug(f"dropping {ns=} to set clear base")
+    rdf_store.drop_graph(ns)
+
+    # read file into graph
+    fg = Graph().parse(str(fpath), format=format_from_extension(fpath))
+    num_triples = len(fg)
+    log.debug(f"inserting {num_triples=} into {ns=}")
+    rdf_store.insert(fg, ns)
+
+    # then verify
+    if sparql_test is None:
+        # default test is to just retrieve all triples we inserted
+        sparql_test = SELECT_ALL_SPO
+        expected_count = num_triples
+
+    result = rdf_store.select(sparql_test, ns)
+    assert len(result) == expected_count, f"test after insert of {fpath=} into {ns=} did not yield {expected_count=}"
+
+    return fg, ns, result
+
+
+@pytest.mark.usefixtures("rdf_store")
+def test_insert_simple_with_bnodes(rdf_store: RDFStore):
+    # check the ingest of a simple example using blank nodes
+    assert_file_ingest(rdf_store, TEST_INPUT_FOLDER / "simple_with_bnodes.ttl")
+
+
+@pytest.mark.usefixtures("rdf_store")
+def test_insert_large_graph(rdf_store: RDFStore):
+    # check the ingest of a large turtle file with many triuples
+    assert_file_ingest(rdf_store, TEST_INPUT_FOLDER / "large_turtle.ttl")
 
 
 @pytest.mark.usefixtures("rdf_store")
 def test_insert_large_statement(rdf_store: RDFStore):
-    assert rdf_store is not None, "can't perform test without target store"
 
-    ns = "urn:test:publication-246614"
-
-    # Read large statement
-    g = Graph().parse("./tests/input/marineinfo-publication-246614.ttl", format='turtle')
-    pub_abstr = "".join([str(part) for part in g.objects(predicate=DCT_ABSTRACT)])
-    log.debug(f"{pub_abstr=}")
-
-    # Call the insert method
-    rdf_store.insert(g, ns)
-
-    # Verify that the large statement is parsed correctly
     sparql = f"SELECT ?abstract WHERE {{ [] <{ DCT_ABSTRACT }> ?abstract }}"
-    results: List[Tuple[str]] = [tuple(str(u) for u in r) for r in rdf_store.select(sparql, ns)]
-    log.debug(f"{sparql=}")
-    log.debug(f"{results=}")
-    assert results[-1][0] == pub_abstr
+    # check the ingest of a turtle file with one really large value in the dct:abstract
+    g, ns, result = assert_file_ingest(rdf_store, TEST_INPUT_FOLDER / "marineinfo-publication-246614.ttl", sparql, 1)
+
+    # check the inserted large abstract from before insert
+    pub_abstr = "".join([str(part) for part in g.objects(predicate=DCT_ABSTRACT)])
+    log.debug(f"{len(pub_abstr)=}")
+
+    # Verify that the large content rountripped nicely
+    result: List[Tuple[str]] = [tuple(str(u) for u in r) for r in result]
+    assert result[-1][0] == pub_abstr
 
 
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
 def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
 
-    # we will create 2 named_graphs, and have them contain some overlapped ranges from the example_graphs
+    # this test plans to create 2 named_graphs, 
+    # so they contain some overlapped ranges from the example_graphs fixture
     plans = [
         dict(ns=f"urn:test-space:{ i }", nums=range(3*i, 4*i+1))
         for i in range(2)

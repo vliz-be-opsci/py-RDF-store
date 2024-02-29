@@ -1,0 +1,9 @@
+@prefix ex: <https://example.org/test#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:One
+  ex:val "uh"^^xsd:string ;
+  ex:node [
+    ex:their_val "2"^^xsd:string ;
+  ];
+.

@@ -8,6 +8,8 @@ import logging
 
 
 log = logging.getLogger(__name__)
+
+NIL_NS = "urn:_:nil"
 ADMIN_NAMED_GRAPH = "urn:py-rdf-store:admin"
 SCHEMA = Namespace("https://schema.org/")
 SCHEMA_DATEMODIFIED = SCHEMA.dateModified
@@ -80,6 +82,9 @@ class RDFStore(ABC):
     @abstractmethod
     def drop_graph(self, named_graph: str) -> None:
         """drops the specifed named_graph (and all its contents)
+        Note: dropping any unknown graph should just work without complaints
+        Note: dropping a graph still leaves a trail of its 'update'
+              in the admin-graph (meaning its age can be verified)
 
         :param named_graph: the uri describing the named_graph to drop
         :type named_graph: str
@@ -93,7 +98,7 @@ class URIRDFStore(RDFStore):
 
     :param read_uri: The URI of the SPARQL endpoint to read from
     :type read_uri: str
-    :param write_uri: The URI of the SPARQL endpoint to write to. 
+    :param write_uri: The URI of the SPARQL endpoint to write to.
                         If not provided, the store can only be read from, not updated.
     :type write_uri: Optional[str]
     """
@@ -108,19 +113,21 @@ class URIRDFStore(RDFStore):
             self.allows_update = True
 
     def select(self, sparql: str, named_graph: Optional[str] = None) -> Result:
-        log.debug(f"exec select {sparql=}")
-        result: Result = self.sparql_store.query(query=sparql, identifier=named_graph)
+        log.debug(f"exec select {sparql=} into {named_graph=}")
+        if named_graph is not None:
+            select_graph = Graph(store=self.sparql_store, identifier=named_graph)
+        else:
+            select_graph = Graph(store=self.sparql_store)
+        result: Result = select_graph.query(sparql)
         log.debug(f"from SPARQLStore :: {type(result)=} -> {result=}")
         return result
 
-    def insert(self, graph: Graph, named_graph: Optional[str] = None):
+    def insert(self, graph: Graph, named_graph: Optional[str] = NIL_NS):
         assert self.allows_update, "data can not be inserted into a store if no write_uri is provided"
-        #self.sparql_store.add_graph(graph)
+        log.debug(f"insertion of {len(graph)=} into ({named_graph=})")
         store_graph = Graph(store=self.sparql_store, identifier=named_graph)
-        store_graph += graph
-
-        if named_graph is not None and len(named_graph) > 0:
-            self._update_registry_lastmod(named_graph, timestamp())
+        store_graph += graph.skolemize()
+        self._update_registry_lastmod(named_graph, timestamp())
 
     def _update_registry_lastmod(self, named_graph: str, lastmod: datetime = None) -> None:
         graph_subject = URIRef(named_graph)
@@ -137,15 +144,15 @@ class URIRDFStore(RDFStore):
         store_graph.add(triple)
 
     def lastmod_ts(self, named_graph: str) -> datetime:
-        store_graph = Graph(store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH)
-        lastmod: Literal = store_graph.value(URIRef(named_graph), SCHEMA_DATEMODIFIED)
+        adm_graph = Graph(store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH)
+        lastmod: Literal = adm_graph.value(URIRef(named_graph), SCHEMA_DATEMODIFIED)
         # above is None if nothing found, else convert the literal to actual .value (datetime)
         return lastmod.value if lastmod is not None else None
 
     def drop_graph(self, named_graph: str) -> None:
         store_graph = Graph(store=self.sparql_store, identifier=named_graph)
         self.sparql_store.remove_graph(store_graph)
-        self._update_registry_lastmod(named_graph)
+        self._update_registry_lastmod(named_graph, timestamp())
 
 
 class MemoryRDFStore(RDFStore):
@@ -173,9 +180,6 @@ class MemoryRDFStore(RDFStore):
         return self._admin_registry[named_graph]
 
     def drop_graph(self, named_graph: str) -> None:
-        if named_graph is None or named_graph not in self._named_graphs:
-            return  # nothing to do -- for now choosen not to make a fuzz about it (exception raise?)
-        # TODO investigate the actual effect of next line when multiple named graphs would have overlapping triples
-        self._all -= self._named_graphs[named_graph]
-        self._named_graphs.pop(named_graph, None)
+        if named_graph is not None and named_graph in self._named_graphs:
+            self._all -= self._named_graphs.pop(named_graph)
         self._admin_registry[named_graph] = timestamp()
