@@ -8,5 +8,6 @@
 """
 
 from .build import create_rdf_store
+from .store import RDFStore
 
-__all__ = ["create_rdf_store"]
+__all__ = ["RDFStore", "create_rdf_store"]
