@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
+from collections.abc import Iterable
 
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
@@ -80,12 +81,40 @@ class RDFStore(ABC):
         """
         pass
 
+    @property
+    @abstractmethod
+    def named_graphs(self) -> Iterable[str]:
+        """returns the known & managed named-graphs in the store
+
+        :return: the list of named-graphs, known and managed (possibly already deleted) in this store
+        :rtype: List[str]
+        """
+        pass
+
     @abstractmethod
     def drop_graph(self, named_graph: str) -> None:
         """drops the specifed named_graph (and all its contents)
         Note: dropping any unknown graph should just work without complaints
         Note: dropping a graph still leaves a trail of its 'update'
               in the admin-graph (meaning its age can be verified)
+              Consider forget_graph to remove that trail of 'update'
+
+        :param named_graph: the uri describing the named_graph to drop
+        :type named_graph: str
+        :rtype: None
+        """
+        pass
+
+    @abstractmethod
+    def forget_graph(self, named_graph: str) -> None:
+        """forgets about the names_graph being under control
+        This functions independent of the drop_graph method.
+        So any client of this service is expected to decide when (or not) to combine both
+
+        Note: dropping any unknown graph should just work without complaints
+        Note: forgetting a graph removes any trail of its 'update'
+              in the admin-graph. 
+              It does nothing to also actually removed the content in the graph
 
         :param named_graph: the uri describing the named_graph to drop
         :type named_graph: str
@@ -141,23 +170,39 @@ class URIRDFStore(RDFStore):
 
     def _update_registry_lastmod(
         self, named_graph: str, lastmod: datetime = None
-    ) -> None:
-        graph_subject = URIRef(named_graph)
+    ) -> Iterable[str]:
+        """ Consults and changes the admin-graph of lastmod entries per named_graph.
+        
+        :param named_graph: the named_graph to be handled, must be provide, but can be None to return the list of all available names
+        :type named_graph: str (or None)
+        :param lastmod: the new lastmod timestamp for this named_graph, if None (or not provided) this will 'forget' the named_graph
+        :type lastmod: datetime
+        :return: the list of named_graphs in management
+        :rtype: Iterable[str]
+        """
+        graph_subject = URIRef(named_graph) if named_graph is not None else None
+        response = [named_graph] if named_graph is not None else None
 
-        store_graph = Graph(
+        adm_graph = Graph(
             store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH
         )
-        # remove any previous triple for this graph
+
+        # construct what we are matching for
         pattern = tuple(
             (graph_subject, SCHEMA_DATEMODIFIED, None)
-        )  # missing object functions as pattern
-        store_graph.remove(pattern)
-        # and insert the new one if provided
-        if lastmod is None:
-            return
-        # else
-        triple = tuple((graph_subject, SCHEMA_DATEMODIFIED, Literal(lastmod)))
-        store_graph.add(triple)
+        )  # missing subject or object functions as pattern
+        # remove any previous triple for this graph if it is specified
+        if graph_subject is not None:
+            adm_graph.remove(pattern)
+        else:
+            response = [str(sub) for (sub, pred, obj) in adm_graph.triples(pattern)]
+
+        # insert the new data if provided
+        if graph_subject is not None and lastmod is not None:
+            triple = tuple((graph_subject, SCHEMA_DATEMODIFIED, Literal(lastmod)))
+            adm_graph.add(triple)
+
+        return response
 
     def lastmod_ts(self, named_graph: str) -> datetime:
         adm_graph = Graph(
@@ -173,6 +218,13 @@ class URIRDFStore(RDFStore):
         store_graph = Graph(store=self.sparql_store, identifier=named_graph)
         self.sparql_store.remove_graph(store_graph)
         self._update_registry_lastmod(named_graph, timestamp())
+
+    @property
+    def named_graphs(self) -> Iterable[str]:
+        return self._update_registry_lastmod(None)
+
+    def forget_graph(self, named_graph: str) -> None:
+        self._update_registry_lastmod(named_graph, None)
 
 
 class MemoryRDFStore(RDFStore):
@@ -207,3 +259,10 @@ class MemoryRDFStore(RDFStore):
         if named_graph is not None and named_graph in self._named_graphs:
             self._all -= self._named_graphs.pop(named_graph)
         self._admin_registry[named_graph] = timestamp()
+
+    @property
+    def named_graphs(self) -> Iterable[str]:
+        return self._admin_registry.keys()
+
+    def forget_graph(self, named_graph: str) -> None:
+        self._admin_registry.pop(named_graph)

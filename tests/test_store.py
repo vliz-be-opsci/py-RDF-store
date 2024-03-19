@@ -69,6 +69,13 @@ def test_unkown_drop(rdf_store: RDFStore):
         ns, 1
     ), f"named_graph {ns=} latest change should be traceable"
 
+    log.debug(f"{list(rdf_store.named_graphs)=}")
+    assert ns in rdf_store.named_graphs, f"named_graph {ns=} should be in list of known graphs"
+
+    # now remove the update-trace
+    rdf_store.forget_graph(ns)
+    assert ns not in rdf_store.named_graphs
+
 
 def format_from_extension(fpath: Path):
     sfx = fpath.suffix
