@@ -1,11 +1,11 @@
 import os
 
 import pytest
+from dotenv import load_dotenv
 from rdflib import Graph, URIRef
 
 from pyrdfstore.build import create_rdf_store
 from pyrdfstore.store import MemoryRDFStore, URIRDFStore
-from dotenv import load_dotenv
 
 load_dotenv()
 

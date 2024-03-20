@@ -1,9 +1,10 @@
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from datetime import datetime
 from typing import Optional
-from collections.abc import Iterable
-from rdflib import Graph, Literal, Namespace, URIRef, BNode
+
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
 

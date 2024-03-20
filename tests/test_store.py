@@ -6,7 +6,7 @@ from typing import List, Tuple
 from uuid import uuid4
 
 import pytest
-from rdflib import Graph, Namespace, URIRef, BNode, Literal
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from util4tests import run_single_test
 
 from pyrdfstore.store import RDFStore
