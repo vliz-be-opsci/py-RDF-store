@@ -3,8 +3,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
 from collections.abc import Iterable
-
-from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib import Graph, Literal, Namespace, URIRef, BNode
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
 
@@ -113,7 +112,7 @@ class RDFStore(ABC):
 
         Note: dropping any unknown graph should just work without complaints
         Note: forgetting a graph removes any trail of its 'update'
-              in the admin-graph. 
+              in the admin-graph.
               It does nothing to also actually removed the content in the graph
 
         :param named_graph: the uri describing the named_graph to drop
@@ -121,6 +120,16 @@ class RDFStore(ABC):
         :rtype: None
         """
         pass
+
+
+def replace_bnodes(graph: Graph) -> Graph:
+    for s, p, o in graph:
+        if isinstance(s, BNode):
+            graph.remove((s, p, o))
+            graph.add((URIRef(str(s)), p, o))
+        if isinstance(o, BNode):
+            graph.remove((s, p, o))
+            graph.add((s, p, URIRef(str(o))))
 
 
 class URIRDFStore(RDFStore):
@@ -165,14 +174,21 @@ class URIRDFStore(RDFStore):
         ), "data can not be inserted into a store if no write_uri is provided"
         log.debug(f"insertion of {len(graph)=} into ({named_graph=})")
         store_graph = Graph(store=self.sparql_store, identifier=named_graph)
-        store_graph += graph.skolemize()
+        # when adding graphs with BNODEs this fails
+        try:
+            store_graph += graph.skolemize()
+        except Exception as e:
+            log.error(f"skolemize failed: {e}")
+            # perform custom scolomize function here
+            graph = replace_bnodes(graph)
+            store_graph += graph
         self._update_registry_lastmod(named_graph, timestamp())
 
     def _update_registry_lastmod(
         self, named_graph: str, lastmod: datetime = None
     ) -> Iterable[str]:
-        """ Consults and changes the admin-graph of lastmod entries per named_graph.
-        
+        """Consults and changes the admin-graph of lastmod entries per named_graph.
+
         :param named_graph: the named_graph to be handled, must be provide, but can be None to return the list of all available names
         :type named_graph: str (or None)
         :param lastmod: the new lastmod timestamp for this named_graph, if None (or not provided) this will 'forget' the named_graph
@@ -180,7 +196,9 @@ class URIRDFStore(RDFStore):
         :return: the list of named_graphs in management
         :rtype: Iterable[str]
         """
-        graph_subject = URIRef(named_graph) if named_graph is not None else None
+        graph_subject = (
+            URIRef(named_graph) if named_graph is not None else None
+        )
         response = [named_graph] if named_graph is not None else None
 
         adm_graph = Graph(
@@ -195,11 +213,15 @@ class URIRDFStore(RDFStore):
         if graph_subject is not None:
             adm_graph.remove(pattern)
         else:
-            response = [str(sub) for (sub, pred, obj) in adm_graph.triples(pattern)]
+            response = [
+                str(sub) for (sub, pred, obj) in adm_graph.triples(pattern)
+            ]
 
         # insert the new data if provided
         if graph_subject is not None and lastmod is not None:
-            triple = tuple((graph_subject, SCHEMA_DATEMODIFIED, Literal(lastmod)))
+            triple = tuple(
+                (graph_subject, SCHEMA_DATEMODIFIED, Literal(lastmod))
+            )
             adm_graph.add(triple)
 
         return response

@@ -6,7 +6,7 @@ from typing import List, Tuple
 from uuid import uuid4
 
 import pytest
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from util4tests import run_single_test
 
 from pyrdfstore.store import RDFStore
@@ -70,7 +70,9 @@ def test_unkown_drop(rdf_store: RDFStore):
     ), f"named_graph {ns=} latest change should be traceable"
 
     log.debug(f"{list(rdf_store.named_graphs)=}")
-    assert ns in rdf_store.named_graphs, f"named_graph {ns=} should be in list of known graphs"
+    assert (
+        ns in rdf_store.named_graphs
+    ), f"named_graph {ns=} should be in list of known graphs"
 
     # now remove the update-trace
     rdf_store.forget_graph(ns)
@@ -251,6 +253,104 @@ def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
             )
             in results
         ), f"expected triple for index { i } not found in result of overall search"
+
+
+@pytest.mark.usefixtures("prepopulated_rdf_store")
+def test_select_property_trajectory(prepopulated_rdf_store: RDFStore):
+    # SPARQL to select trajectory of a property
+    sparql = """
+    SELECT ?s ?o WHERE {?s <http://purl.org/dc/terms/abstract>/<http://purl.org/dc/terms/else> ?o .}
+    """
+
+    prepopulated_rdf_store.select(sparql)
+    # we should just get here without an error
+    assert True
+
+
+@pytest.mark.usefixtures("rdf_store")
+def test_select_property_trajectory_blank_node(
+    rdf_store: RDFStore,
+):
+    # SPARQL to select trajectory of a property
+    sparql = """
+    PREFIX dcat: <http://www.w3.org/ns/dcat#>
+        SELECT ?s
+        WHERE {
+          [] dcat:resource ?s .
+        }
+    """
+    prepopulated_rdf_store = rdf_store
+    print(prepopulated_rdf_store)
+    prepopulated_rdf_store.select(sparql)
+    # we should just get here without an error
+    assert True
+
+    sparql = """PREFIX dcat: <http://www.w3.org/ns/dcat#> SELECT ?s WHERE {
+                   [] dcat:resource ?s .
+               }
+
+    """
+
+    prepopulated_rdf_store.select(sparql)
+    assert True
+
+    sparql = """ SELECT ?s WHERE {
+                   ?o ?p ?s .
+               }
+    """
+
+    results = prepopulated_rdf_store.select(sparql)
+    print(results)
+    print(len(results))
+
+
+@pytest.mark.usefixtures("rdf_store")
+def test_skolemize_fail(rdf_store: RDFStore):
+    rdf_store.insert(
+        Graph().parse(str(TEST_INPUT_FOLDER / "3293.jsonld"), format="json-ld")
+    )
+
+    assert True
+
+
+def test_insert_with_skolemize(rdf_store: RDFStore):
+    # Create a test graph with BNODEs
+    graph = Graph()
+    graph.add((BNode(), DCT_ABSTRACT, Literal("Test abstract")))
+
+    sparql = f"SELECT ?abstract WHERE {{ [] <{DCT_ABSTRACT}> ?abstract }}"
+    result_before = rdf_store.select(sparql)
+
+    # Call the insert method
+    rdf_store.insert(graph)
+
+    # Verify that the graph is inserted correctly
+    sparql = f"SELECT ?abstract WHERE {{ [] <{DCT_ABSTRACT}> ?abstract }}"
+    result = rdf_store.select(sparql)
+    assert len(result) == len(result_before) + 1
+
+
+def test_insert_with_replace_bnodes(rdf_store: RDFStore):
+    # Create a test graph with BNODEs
+    graph = Graph()
+    graph.add((BNode(), DCT_ABSTRACT, Literal("Test abstract")))
+
+    # Verify that the graph is inserted correctly
+    # get the len result before testing if addition is working
+    sparql = f"SELECT ?abstract WHERE {{ [] <{DCT_ABSTRACT}> ?abstract }}"
+    result_before = rdf_store.select(sparql)
+
+    # Call the insert method
+    rdf_store.insert(graph)
+
+    result = rdf_store.select(sparql)
+
+    print(result)
+    # the result is of type xmlresult, so we need to convert it to a list
+
+    result = [tuple(str(u) for u in r) for r in result]
+
+    assert len(result) == len(result_before) + 1
 
 
 if __name__ == "__main__":
