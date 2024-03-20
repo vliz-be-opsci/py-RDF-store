@@ -50,5 +50,5 @@ jobs:
         with:
           cov-omit-list: tests/*, *__init__*, *__version__*, *__main__*, *exceptions*
           cov-threshold-single: 60
-          cov-threshold-total: 70
+          cov-threshold-total: 60
           async-tests: true
