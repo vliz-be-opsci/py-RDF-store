@@ -122,17 +122,6 @@ class RDFStore(ABC):
         pass
 
 
-def replace_bnodes(graph: Graph) -> Graph:
-    for s, p, o in graph:
-        if isinstance(s, BNode):
-            graph.remove((s, p, o))
-            graph.add((URIRef(str(s)), p, o))
-        if isinstance(o, BNode):
-            graph.remove((s, p, o))
-            graph.add((s, p, URIRef(str(o))))
-    return graph
-
-
 class URIRDFStore(RDFStore):
     """This class is used to connect to a SPARQL endpoint and execute SPARQL queries
 
@@ -175,14 +164,10 @@ class URIRDFStore(RDFStore):
         ), "data can not be inserted into a store if no write_uri is provided"
         log.debug(f"insertion of {len(graph)=} into ({named_graph=})")
         store_graph = Graph(store=self.sparql_store, identifier=named_graph)
-        # when adding graphs with BNODEs this fails
         try:
             store_graph += graph.skolemize()
         except Exception as e:
-            log.error(f"skolemize failed: {e}")
-            # perform custom scolomize function here
-            graph = replace_bnodes(graph)
-            store_graph += graph
+            log.exception(e)
         self._update_registry_lastmod(named_graph, timestamp())
 
     def _update_registry_lastmod(

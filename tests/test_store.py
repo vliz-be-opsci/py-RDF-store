@@ -306,10 +306,11 @@ def test_select_property_trajectory_blank_node(
 
 @pytest.mark.usefixtures("rdf_store")
 def test_skolemize_fail(rdf_store: RDFStore):
-    rdf_store.insert(
-        Graph().parse(str(TEST_INPUT_FOLDER / "3293.jsonld"), format="json-ld")
-    )
 
+    graph = Graph()
+    graph.parse(str(TEST_INPUT_FOLDER / "3293.jsonld"), format="json-ld")
+
+    rdf_store.insert(graph)
     assert True
 
 
@@ -327,29 +328,6 @@ def test_insert_with_skolemize(rdf_store: RDFStore):
     # Verify that the graph is inserted correctly
     sparql = f"SELECT ?abstract WHERE {{ [] <{DCT_ABSTRACT}> ?abstract }}"
     result = rdf_store.select(sparql)
-    assert len(result) == len(result_before) + 1
-
-
-def test_insert_with_replace_bnodes(rdf_store: RDFStore):
-    # Create a test graph with BNODEs
-    graph = Graph()
-    graph.add((BNode(), DCT_ABSTRACT, Literal("Test abstract")))
-
-    # Verify that the graph is inserted correctly
-    # get the len result before testing if addition is working
-    sparql = f"SELECT ?abstract WHERE {{ [] <{DCT_ABSTRACT}> ?abstract }}"
-    result_before = rdf_store.select(sparql)
-
-    # Call the insert method
-    rdf_store.insert(graph)
-
-    result = rdf_store.select(sparql)
-
-    print(result)
-    # the result is of type xmlresult, so we need to convert it to a list
-
-    result = [tuple(str(u) for u in r) for r in result]
-
     assert len(result) == len(result_before) + 1
 
 
