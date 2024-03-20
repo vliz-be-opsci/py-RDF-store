@@ -130,6 +130,7 @@ def replace_bnodes(graph: Graph) -> Graph:
         if isinstance(o, BNode):
             graph.remove((s, p, o))
             graph.add((s, p, URIRef(str(o))))
+    return graph
 
 
 class URIRDFStore(RDFStore):
