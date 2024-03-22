@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "pyrdfstore"
+version = "0.1.0"
+description = ""
+authors = ["Decruw Cedric <cedric.decruw@vliz.be>"]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0.0"
+rdflib = "*"
+validators = "^0.22.0"
+sparqlwrapper = "^2.0.0"
+sphinx-rtd-theme = "^2.0.0"
+recommonmark = "^0.7.1"
+myst-parser = "^2.0.0"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "*"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+poetry = "*"
+isort = "*"
+black = "*"
+flake8 = "*"
+
+[tool.poetry.group.tests]
+optional = true
+
+[tool.poetry.group.tests.dependencies]
+pyyaml = "*"
+pytest = "*"
+coverage = "*"
+python-dotenv = "*"
+pytest-cov = "*"
+
+[tool.poetry.scripts]
+pyrdfstore = "pyrdfstore.__main__:main"
+
+[build-system]
+requires = ["setuptools","poetry"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 79
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests",]
+pythonpath = ["."]

@@ -15,13 +15,13 @@ handlers:
     class: logging.FileHandler
     level: DEBUG
     formatter: base
-    filename: pyTravHarv.log
+    filename: rdf-store.log
     mode: "w" # in stead of 'a'
 loggers:
   __main__:
     level: DEBUG
     propagate: yes
-  pytravharv:
+  pyrdfstore:
     level: DEBUG
     propagate: yes
   tests:

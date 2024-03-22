@@ -1,0 +1,9 @@
+tests/__pycache__
+.coverage
+docs/
+dist/
+pyrdfstore/__pycache__
+pyrdfstore.log
+.env
+poetry.lock
+rdf-store.log

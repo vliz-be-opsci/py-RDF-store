@@ -1,0 +1,314 @@
+{
+    "@context": {
+        "skos": "http:\/\/www.w3.org\/2004\/02\/skos\/core#",
+        "prov": "http:\/\/www.w3.org\/ns\/prov#",
+        "mr": "http:\/\/marineregions.org\/ns\/ontology#",
+        "mrt": "http:\/\/marineregions.org\/ns\/placetypes#",
+        "rdfs": "http:\/\/www.w3.org\/2000\/01\/rdf-schema#",
+        "dcat": "http:\/\/www.w3.org\/ns\/dcat#",
+        "gsp": "http:\/\/www.opengis.net\/ont\/geosparql#",
+        "xsd": "http:\/\/www.w3.org\/2001\/XMLSchema#",
+        "dc": "http:\/\/purl.org\/dc\/terms\/",
+        "dcat:centroid": {
+            "@type": "gsp:wktLiteral"
+        },
+        "dcat:bbox": {
+            "@type": "gsp:wktLiteral"
+        },
+        "mr:hasGeometry": {
+            "@type": "@id"
+        },
+        "rdfs:seeAlso": {
+            "@type": "@id"
+        },
+        "dc:modified": {
+            "@type": "xsd:dateTime"
+        },
+        "dc:isVersionOf": {
+            "@type": "@id"
+        },
+        "hydra": "http:\/\/www.w3.org\/ns\/hydra\/core#",
+        "hydra:next": {
+            "@type": "@id"
+        },
+        "schema": "https:\/\/schema.org\/"
+    },
+    "@id": "http:\/\/marineregions.org\/mrgid\/3293",
+    "@type": [
+        "mr:MRGeoObject",
+        "mrt:EEZ"
+    ],
+    "skos:prefLabel": [
+        {
+            "@value": "Belgian Exclusive Economic Zone",
+            "@language": "en"
+        }
+    ],
+    "skos:altLabel": [
+        {
+            "@value": "Belgian Continental Shelf",
+            "@language": "en"
+        }
+    ],
+    "mr:isPartOf": [
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Nation"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/14",
+            "skos:prefLabel": {
+                "@value": "Belgium",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:IHOSeaArea"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/2350",
+            "skos:prefLabel": {
+                "@value": "North Sea",
+                "@language": "en"
+            }
+        }
+    ],
+    "mr:contains": [
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:SandbankSystem"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/2419",
+            "skos:prefLabel": {
+                "@value": "Hinder Banks",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:SandbankSystem"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/2420",
+            "skos:prefLabel": {
+                "@value": "Zeeland Banks",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:SandbankSystem"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/2421",
+            "skos:prefLabel": {
+                "@value": "Flemish Banks",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:SandbankSystem"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/4675",
+            "skos:prefLabel": {
+                "@value": "Coastal Banks",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Wreck"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/17401",
+            "skos:prefLabel": {
+                "@value": "Birkenfels",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Wreck"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/17409",
+            "skos:prefLabel": {
+                "@value": "Bourrasque",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Wreck"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/17666",
+            "skos:prefLabel": {
+                "@value": "Kilmore Shipwreck",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Wreck"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/17865",
+            "skos:prefLabel": {
+                "@value": "Sperrbrecher",
+                "@language": "de"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Natura2000SiteOfCommunityImportanceSCIEUHabitatsDirective"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/27555",
+            "skos:prefLabel": {
+                "@value": "Vlakte Van de Raan",
+                "@language": "nl"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Natura2000SpecialProtectionAreaSPAEUBirdsDirective"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/27790",
+            "skos:prefLabel": {
+                "@value": "Sbz 2 \/ Zps 2",
+                "@language": "nl"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Natura2000SpecialProtectionAreaSPAEUBirdsDirective"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/28318",
+            "skos:prefLabel": {
+                "@value": "Sbz 1 \/ Zps 1",
+                "@language": "nl"
+            }
+        }
+    ],
+    "mr:isAdjacentTo": [
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Coast"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/2550",
+            "skos:prefLabel": {
+                "@value": "Belgian Coast",
+                "@language": "en"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:InhabitedPlace"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/19673",
+            "skos:prefLabel": {
+                "@value": "Nieuwpoort-Bad",
+                "@language": "nl"
+            }
+        }
+    ],
+    "mr:partlyContains": [
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Sandbank"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/24676",
+            "skos:prefLabel": {
+                "@value": "Lodewijkbank",
+                "@language": "nl"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Natura2000SpecialProtectionAreaAndSiteOfCommunityImportanceSPAAndSCIEUBirdsAndHabitatsDirective"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/27234",
+            "skos:prefLabel": {
+                "@value": "Westerschelde & Saeftinghe",
+                "@language": "nl"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Natura2000SiteOfCommunityImportanceSCIEUHabitatsDirective"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/27637",
+            "skos:prefLabel": {
+                "@value": "Dunes de La Plaine Maritime Flamande",
+                "@language": "fr"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Natura2000SpecialProtectionAreaSPAEUBirdsDirective"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/28140",
+            "skos:prefLabel": {
+                "@value": "Zwin",
+                "@language": "nl"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Natura2000SiteOfCommunityImportanceSCIEUHabitatsDirective"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/28142",
+            "skos:prefLabel": {
+                "@value": "Zwin",
+                "@language": "nl"
+            }
+        },
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:Natura2000SiteOfCommunityImportanceSCIEUHabitatsDirective"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/28226",
+            "skos:prefLabel": {
+                "@value": "Schelde- En Durme\u00ebstuarium Van de Nederlandse Grens Tot Gent",
+                "@language": "nl"
+            }
+        }
+    ],
+    "mr:isPreferredAlternativeOf": [
+        {
+            "@type": [
+                "mr:MRGeoObject",
+                "mrt:MarineRegion"
+            ],
+            "@id": "http:\/\/marineregions.org\/mrgid\/26567",
+            "skos:prefLabel": {
+                "@value": "Belgian part of the North Sea",
+                "@language": "en"
+            }
+        }
+    ],
+    "dc:modified": "2023-10-28T08:26:23Z",
+    "prov:hadPrimarySource": {
+        "rdfs:label": "Flanders Marine Institute (2023). Maritime Boundaries Geodatabase: Maritime Boundaries and Exclusive Economic Zones (200NM), version 12. Available online at http:\/\/www.marineregions.org\/. https:\/\/doi.org\/10.14284\/632",
+        "@id": "http:\/\/www.marineregions.org"
+    },
+    "dcat:centroid": "<http:\/\/www.opengis.net\/def\/crs\/OGC\/1.3\/CRS84> POINT (2.72132 51.46321)",
+    "dcat:bbox": "<http:\/\/www.opengis.net\/def\/crs\/OGC\/1.3\/CRS84> POLYGON ((4.40204 51.87611,2.23833 51.87611,2.23833 51.03976,4.40204 51.03976,4.40204 51.87611))",
+    "mr:hasGeometry": "http:\/\/marineregions.org\/mrgid\/3293\/geometries?source=79&attributeValue=3293",
+    "hydra:next": "http:\/\/marineregions.org\/mrgid\/3293?page=2"
+}
