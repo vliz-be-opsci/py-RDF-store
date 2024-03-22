@@ -1,40 +1,83 @@
 import os
+import requests
 
 import pytest
 from dotenv import load_dotenv
 from rdflib import Graph, URIRef
+from typing import Iterable
+from pathlib import Path
 
-from pyrdfstore.build import create_rdf_store
+from pyrdfstore import RDFStore, create_rdf_store
+from util4tests import log
+
+
+TEST_INPUT_FOLDER = Path(__file__).parent / "./input"
+
 
 load_dotenv()
 
 
 @pytest.fixture()
-def rdf_store():
+def _mem_rdf_store() -> RDFStore:
+    """in memory store
+    """
+    log.debug("creating in memory rdf store")
+    return create_rdf_store()
+
+
+@pytest.fixture()
+def _uri_rdf_store() -> RDFStore:
+    """proxy to available graphdb store
+    But only if environment variables are set and service is available
+    else None (which will result in trimming it from rdf_stores fixture)
+    """
     read_uri = os.getenv("TEST_SPARQL_READ_URI", None)
     write_uri = os.getenv("TEST_SPARQL_WRITE_URI", None)
-    print(f"read_uri: {read_uri}")
-    print(f"write_uri: {write_uri}")
+    # if no URI (or not accessible) provided - skip this by returning None
+    if read_uri is None and write_uri is None:
+        log.debug("not creating uri rdf store in test - no uri provided")
+        return None
+    for uri in (read_uri, write_uri):
+        if not requests.options(uri).ok:
+            log.debug("not creating uri rdf store in test - provided {uri=} not accesible")
+            return None
+    # else -- all is well
+    log.debug("creating uri rdf store proxy to ({read_uri=}, {write_uri=})")
     return create_rdf_store(read_uri, write_uri)
 
 
 @pytest.fixture()
-def prepopulated_rdf_store(rdf_store):
+def rdf_stores(_mem_rdf_store, _uri_rdf_store) -> Iterable[RDFStore]:
+    """trimmed list of available stores to be tested
+    """
+    stores = tuple(store for store in (_mem_rdf_store, _uri_rdf_store) if store is not None)
+    return stores
+
+
+def loadfilegraph(fname, format="json-ld"):
     graph = Graph()
-    graph.parse("tests/input/3293.jsonld", format="json-ld")
-    rdf_store.insert(graph)
-    return rdf_store
+    graph.parse(fname, format=format)
+    return graph
 
 
 @pytest.fixture()
-def example_graphs():
-    def make_ex_grph(n: int) -> Graph:
-        g = Graph()
+def sample_file_graph():
+    """ graph loaded from specific input file
+    """
+    return loadfilegraph(str(TEST_INPUT_FOLDER / "3293.jsonld"))
+
+
+def make_sample_graph(items: Iterable) -> Graph:
+    g = Graph()
+    for n in items:
         triple = tuple(
             URIRef(f"https://example.org/{part}#{n}")
             for part in ["subject", "predicate", "object"]
         )
         g.add(triple)
-        return g
+    return g
 
-    return [make_ex_grph(i) for i in range(10)]
+
+@pytest.fixture()
+def example_graphs():
+    return [make_sample_graph([i]) for i in range(10)]
