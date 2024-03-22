@@ -173,7 +173,7 @@ class URIRDFStore(RDFStore):
     ) -> Iterable[str]:
         """Consults and changes the admin-graph of lastmod entries per named_graph.
 
-        :param named_graph: the named_graph to be handled, must be provide, but can be None to return the list of all available names
+        :param named_graph: the named_graph to be handled, required, can be None to return the list of all available names
         :type named_graph: str (or None)
         :param lastmod: the new lastmod timestamp for this named_graph, if None (or not provided) this will 'forget' the named_graph
         :type lastmod: datetime
