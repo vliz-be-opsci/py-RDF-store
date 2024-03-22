@@ -165,10 +165,7 @@ class URIRDFStore(RDFStore):
         ), "data can not be inserted into a store if no write_uri is provided"
         log.debug(f"insertion of {len(graph)=} into ({named_graph=})")
         store_graph = Graph(store=self.sparql_store, identifier=named_graph)
-        try:
-            store_graph += graph.skolemize()
-        except Exception as e:
-            log.exception(e)
+        store_graph += graph.skolemize()
         self._update_registry_lastmod(named_graph, timestamp())
 
     def _update_registry_lastmod(

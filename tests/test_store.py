@@ -6,12 +6,12 @@ from typing import List, Tuple
 from uuid import uuid4
 
 import pytest
+import rdflib
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
-from util4tests import run_single_test
+from util4tests import log, run_single_test
 
 from pyrdfstore.store import RDFStore
 
-log = getLogger("tests")
 DCT: Namespace = Namespace("http://purl.org/dc/terms/#")
 DCT_ABSTRACT: URIRef = DCT.abstract
 SELECT_ALL_SPO = "SELECT ?s ?p ?o WHERE { ?s ?p ?o . }"
@@ -29,7 +29,6 @@ def test_fixtures(rdf_store: RDFStore, example_graphs: List[Graph]):
 
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
 def test_insert(rdf_store: RDFStore, example_graphs: List[Graph]):
-
     # Call the insert method
     nums = range(2)
     for i in nums:
@@ -135,7 +134,6 @@ def test_insert_large_graph(rdf_store: RDFStore):
 
 @pytest.mark.usefixtures("rdf_store")
 def test_insert_large_statement(rdf_store: RDFStore):
-
     sparql = f"SELECT ?abstract WHERE {{ [] <{ DCT_ABSTRACT }> ?abstract }}"
     # check the ingest of a turtle file with one really large value in the dct:abstract
     g, ns, result = assert_file_ingest(
@@ -158,7 +156,6 @@ def test_insert_large_statement(rdf_store: RDFStore):
 
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
 def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
-
     # this test plans to create 2 named_graphs,
     # so they contain some overlapped ranges from the example_graphs fixture
     plans = [
@@ -262,9 +259,11 @@ def test_select_property_trajectory(prepopulated_rdf_store: RDFStore):
     SELECT ?s ?o WHERE {?s <http://purl.org/dc/terms/abstract>/<http://purl.org/dc/terms/else> ?o .}
     """
 
-    prepopulated_rdf_store.select(sparql)
+    result = prepopulated_rdf_store.select(sparql)
     # we should just get here without an error
     assert True
+    assert result is not None
+    assert isinstance(result, rdflib.plugins.sparql.processor.SPARQLResult)
 
 
 @pytest.mark.usefixtures("rdf_store")
@@ -281,9 +280,11 @@ def test_select_property_trajectory_blank_node(
     """
     prepopulated_rdf_store = rdf_store
     print(prepopulated_rdf_store)
-    prepopulated_rdf_store.select(sparql)
+    result = prepopulated_rdf_store.select(sparql)
     # we should just get here without an error
     assert True
+    assert result is not None
+    assert isinstance(result, rdflib.plugins.sparql.processor.SPARQLResult)
 
     sparql = """PREFIX dcat: <http://www.w3.org/ns/dcat#> SELECT ?s WHERE {
                    [] dcat:resource ?s .
@@ -291,8 +292,10 @@ def test_select_property_trajectory_blank_node(
 
     """
 
-    prepopulated_rdf_store.select(sparql)
+    result = prepopulated_rdf_store.select(sparql)
     assert True
+    assert result is not None
+    assert isinstance(result, rdflib.plugins.sparql.processor.SPARQLResult)
 
     sparql = """ SELECT ?s WHERE {
                    ?o ?p ?s .
@@ -306,12 +309,15 @@ def test_select_property_trajectory_blank_node(
 
 @pytest.mark.usefixtures("rdf_store")
 def test_skolemize_fail(rdf_store: RDFStore):
-
     graph = Graph()
     graph.parse(str(TEST_INPUT_FOLDER / "3293.jsonld"), format="json-ld")
-
+    len_graph = len(graph)
     rdf_store.insert(graph)
+    all_result = rdf_store.select(SELECT_ALL_SPO)
+
     assert True
+    assert all_result is not None
+    assert len(all_result) == len_graph
 
 
 def test_insert_with_skolemize(rdf_store: RDFStore):
