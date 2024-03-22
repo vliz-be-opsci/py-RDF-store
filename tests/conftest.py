@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from rdflib import Graph, URIRef
 
 from pyrdfstore.build import create_rdf_store
-from pyrdfstore.store import MemoryRDFStore, URIRDFStore
 
 load_dotenv()
 
@@ -17,10 +16,6 @@ def rdf_store():
     print(f"read_uri: {read_uri}")
     print(f"write_uri: {write_uri}")
     return create_rdf_store(read_uri, write_uri)
-    if read_uri is not None:
-        return URIRDFStore(read_uri, write_uri)
-    # else
-    return MemoryRDFStore()
 
 
 @pytest.fixture()

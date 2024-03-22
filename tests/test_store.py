@@ -4,14 +4,13 @@ from pathlib import Path
 from time import sleep
 from typing import List, Tuple
 from uuid import uuid4
-
+import rdflib
 import pytest
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
-from util4tests import run_single_test
+from util4tests import run_single_test, log
 
 from pyrdfstore.store import RDFStore
 
-log = getLogger("tests")
 DCT: Namespace = Namespace("http://purl.org/dc/terms/#")
 DCT_ABSTRACT: URIRef = DCT.abstract
 SELECT_ALL_SPO = "SELECT ?s ?p ?o WHERE { ?s ?p ?o . }"
@@ -262,9 +261,11 @@ def test_select_property_trajectory(prepopulated_rdf_store: RDFStore):
     SELECT ?s ?o WHERE {?s <http://purl.org/dc/terms/abstract>/<http://purl.org/dc/terms/else> ?o .}
     """
 
-    prepopulated_rdf_store.select(sparql)
+    result = prepopulated_rdf_store.select(sparql)
     # we should just get here without an error
     assert True
+    assert result is not None
+    assert isinstance(result, rdflib.plugins.sparql.processor.SPARQLResult)
 
 
 @pytest.mark.usefixtures("rdf_store")
@@ -281,9 +282,11 @@ def test_select_property_trajectory_blank_node(
     """
     prepopulated_rdf_store = rdf_store
     print(prepopulated_rdf_store)
-    prepopulated_rdf_store.select(sparql)
+    result = prepopulated_rdf_store.select(sparql)
     # we should just get here without an error
     assert True
+    assert result is not None
+    assert isinstance(result, rdflib.plugins.sparql.processor.SPARQLResult)
 
     sparql = """PREFIX dcat: <http://www.w3.org/ns/dcat#> SELECT ?s WHERE {
                    [] dcat:resource ?s .
@@ -291,8 +294,10 @@ def test_select_property_trajectory_blank_node(
 
     """
 
-    prepopulated_rdf_store.select(sparql)
+    result = prepopulated_rdf_store.select(sparql)
     assert True
+    assert result is not None
+    assert isinstance(result, rdflib.plugins.sparql.processor.SPARQLResult)
 
     sparql = """ SELECT ?s WHERE {
                    ?o ?p ?s .
@@ -309,9 +314,13 @@ def test_skolemize_fail(rdf_store: RDFStore):
 
     graph = Graph()
     graph.parse(str(TEST_INPUT_FOLDER / "3293.jsonld"), format="json-ld")
-
+    len_graph = len(graph)
     rdf_store.insert(graph)
+    all_result = rdf_store.select(SELECT_ALL_SPO)
+
     assert True
+    assert all_result is not None
+    assert len(all_result) == len_graph
 
 
 def test_insert_with_skolemize(rdf_store: RDFStore):
