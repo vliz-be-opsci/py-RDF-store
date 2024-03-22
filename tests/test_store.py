@@ -4,10 +4,11 @@ from pathlib import Path
 from time import sleep
 from typing import List, Tuple
 from uuid import uuid4
-import rdflib
+
 import pytest
+import rdflib
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
-from util4tests import run_single_test, log
+from util4tests import log, run_single_test
 
 from pyrdfstore.store import RDFStore
 
@@ -28,7 +29,6 @@ def test_fixtures(rdf_store: RDFStore, example_graphs: List[Graph]):
 
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
 def test_insert(rdf_store: RDFStore, example_graphs: List[Graph]):
-
     # Call the insert method
     nums = range(2)
     for i in nums:
@@ -134,7 +134,6 @@ def test_insert_large_graph(rdf_store: RDFStore):
 
 @pytest.mark.usefixtures("rdf_store")
 def test_insert_large_statement(rdf_store: RDFStore):
-
     sparql = f"SELECT ?abstract WHERE {{ [] <{ DCT_ABSTRACT }> ?abstract }}"
     # check the ingest of a turtle file with one really large value in the dct:abstract
     g, ns, result = assert_file_ingest(
@@ -157,7 +156,6 @@ def test_insert_large_statement(rdf_store: RDFStore):
 
 @pytest.mark.usefixtures("rdf_store", "example_graphs")
 def test_insert_named(rdf_store: RDFStore, example_graphs: List[Graph]):
-
     # this test plans to create 2 named_graphs,
     # so they contain some overlapped ranges from the example_graphs fixture
     plans = [
@@ -311,7 +309,6 @@ def test_select_property_trajectory_blank_node(
 
 @pytest.mark.usefixtures("rdf_store")
 def test_skolemize_fail(rdf_store: RDFStore):
-
     graph = Graph()
     graph.parse(str(TEST_INPUT_FOLDER / "3293.jsonld"), format="json-ld")
     len_graph = len(graph)
