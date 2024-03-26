@@ -18,6 +18,14 @@ load_dotenv()
 
 
 @pytest.fixture()
+def quicktest() -> bool:
+    """ bool setting indicating to skip lengthy tests 
+    setting driven by setting env variable "QUICKTEST" to anything but 0 or ""
+    """
+    return bool(os.getenv("QUICKTEST", 0))
+
+
+@pytest.fixture()
 def _mem_rdf_store() -> RDFStore:
     """in memory store
     """
@@ -38,7 +46,7 @@ def _uri_rdf_store() -> RDFStore:
         log.debug("not creating uri rdf store in test - no uri provided")
         return None
     for uri in (read_uri, write_uri):
-        if not requests.options(uri).ok:
+        if not requests.get(uri).ok:
             log.debug("not creating uri rdf store in test - provided {uri=} not accesible")
             return None
     # else -- all is well

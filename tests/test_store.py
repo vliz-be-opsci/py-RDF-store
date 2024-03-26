@@ -172,8 +172,8 @@ def test_insert_large_statement(rdf_stores: Iterable[RDFStore]):
         assert result[-1][0] == pub_abstr, f"{rdf_store_type} :: mismatch {pub_abstr=} != '{result[-1][0]}'"
 
 
-@pytest.mark.usefixtures("rdf_stores", "example_graphs")
-def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
+@pytest.mark.usefixtures("rdf_stores", "example_graphs", "quicktest")
+def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph], quicktest: bool):
 
     # this test plans to create 2 named_graphs,
     # so they contain some overlapped ranges from the example_graphs fixture
@@ -217,6 +217,11 @@ def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph
             assert rdf_store.verify_max_age(
                 ns, 1
             ), f"{rdf_store_type} :: graphs should be inserted and checked in less then a minute"
+
+        if quicktest:
+            # skip the remainder of the test involving wait times
+            continue
+        # else do the rest of the test which even involves taking wait time...
 
         sleep(60)  # hey, seriuosly? wait a minute!
         for plan in plans:

@@ -1,7 +1,9 @@
 TEST_PATH = ./tests/
 FLAKE8_EXCLUDE = venv,.venv,.eggs,.tox,.git,__pycache__,*.pyc
 PROJECT = pyrdfstore
-AUTHOR = "Cedric Decruw"#
+AUTHOR = "Flanders Marine Institute, VLIZ vzw"
+
+REPONAME = ${PROJECT}
 
 clean:
 	@find . -name '*.pyc' -exec rm --force {} +
@@ -35,11 +37,25 @@ docs:
 	poetry run sphinx-apidoc -o ./docs/source ./$(PROJECT)
 	poetry run sphinx-build -b html ./docs/source ./docs/build/html
 	cp ./docs/source/custom.css ./docs/build/html/_static/custom.css
+
 test:
-	poetry run pytest ${TEST_PATH}
+	@poetry run pytest ${TEST_PATH}
+
+test-quick:
+	@(export QUICKTEST=1 && $(MAKE) test --no-print-directory)
+
+test-with-graphdb:
+	@./tests/kgap-graphdb.sh start-wait 
+	@(export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test --no-print-directory)
+	@./tests/kgap-graphdb.sh stop
 
 test-coverage:
-	poetry run pytest --cov=$(PROJECT) ${TEST_PATH} --cov-report term-missing
+	@poetry run pytest --cov=$(PROJECT) ${TEST_PATH} --cov-report term-missing
+
+test-coverage-with-graphdb:
+	@./tests/kgap-graphdb.sh start-wait 
+	@(export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test-coverage --no-print-directory)
+	@./tests/kgap-graphdb.sh stop
 
 check:
 	poetry run black --check --diff .
