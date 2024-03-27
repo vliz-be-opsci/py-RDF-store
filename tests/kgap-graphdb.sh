@@ -39,16 +39,21 @@ do_start() {
 # Function to stop the container
 do_stop() {
     echo "shutting-down local graphdb docker container"
-    docker stop ${DCKRNAME} || echo "Aborted script to stop ${DCKRNAME}" && exit 1
+    docker stop ${DCKRNAME} || (echo "Aborted script to stop ${DCKRNAME}" && exit 1)
     echo "docker 'graphdb' stopped"
 }
 
 # Function to wait for the container
 do_wait_health() {
     echo "waiting for local graphdb docker container to be in health state"
-    until [ "$(docker inspect -f {{.State.Health.Status}} ${DCKRNAME})"=="healthy" ]; do
-        sleep 0.5;
-    done;
+    status=""
+    wait=0
+    while [[ $status != "healthy" ]] ; do 
+        sleep $wait; echo -n "."
+        status=$(docker inspect -f {{.State.Health.Status}} ${DCKRNAME})
+        wait=0.5
+    done; 
+    echo -e "\ndocker 'graphdb' up and $status"
 }
 
 # Main execution
