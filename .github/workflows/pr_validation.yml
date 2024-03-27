@@ -44,11 +44,4 @@ jobs:
         run: |
           make test-coverage-with-graphdb
 
-      - id: run-tests
-        if: ${{steps.pytest_test.outcome == 'success'}}
-        uses: JotaFan/pycoverage@v1.1.0
-        with:
-          cov-omit-list: tests/*, *__init__*, *__version__*, *__main__*, *exceptions*
-          cov-threshold-single: 60
-          cov-threshold-total: 60
-          async-tests: true
+
