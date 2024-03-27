@@ -3,7 +3,7 @@ FLAKE8_EXCLUDE = venv,.venv,.eggs,.tox,.git,__pycache__,*.pyc
 PROJECT = pyrdfstore
 AUTHOR = "Flanders Marine Institute, VLIZ vzw"
 
-REPONAME = ${PROJECT}
+REPONAME = py_rdf_store_test
 
 .PHONY: help docker-build docker-push docker-start docker-stop
 .DEFAULT_GOAL := help
@@ -51,16 +51,16 @@ test-quick:  ## runs tests more quickly by skipping some lengthy ones
 	@(export QUICKTEST=1 && $(MAKE) test --no-print-directory)
 
 test-with-graphdb: ## runs the standard test-suite for all available implementations (requires docker to spin up a sparql endpoint)
-	@./tests/kgap-graphdb.sh start-wait 
-	@(export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test --no-print-directory)
+	@(export REPONAME=${REPONAME} && ./tests/kgap-graphdb.sh start-wait)
+	-@(export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test --no-print-directory)
 	@./tests/kgap-graphdb.sh stop
 
 test-coverage:  ## runs the standard test-suite for the memory-graph implementation and produces a coverage report
 	@poetry run pytest --cov=$(PROJECT) ${TEST_PATH} --cov-report term-missing
 
 test-coverage-with-graphdb:  ## runs the standard test-suite for all available implementations and produces a coverage report
-	@./tests/kgap-graphdb.sh start-wait 
-	@(export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test-coverage --no-print-directory)
+	@(export REPONAME=${REPONAME} && ./tests/kgap-graphdb.sh start-wait)
+	-@(export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test-coverage --no-print-directory)
 	@./tests/kgap-graphdb.sh stop
 
 check:  ## performs linting on the python code

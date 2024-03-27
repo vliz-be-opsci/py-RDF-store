@@ -31,7 +31,7 @@ do_start() {
     echo "contact it at http://localhost:7200 and/or use these settings for SPARQL connections:"
     TEST_SPARQL_READ_URI=http://localhost:7200/repositories/${REPONAME}
     TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements
-    echo "for tests connecting to the instance use:"
+    echo "for tests connecting to the instance use these: (or call this script with 'source' in front)"
     echo "   TEST_SPARQL_READ_URI=${TEST_SPARQL_READ_URI}"
     echo "  TEST_SPARQL_WRITE_URI=${TEST_SPARQL_WRITE_URI}"
 }

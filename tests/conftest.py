@@ -2,22 +2,21 @@ import os
 import requests
 
 import pytest
-from dotenv import load_dotenv
 from rdflib import Graph, URIRef
 from typing import Iterable
 from pathlib import Path
 
 from pyrdfstore import RDFStore, create_rdf_store
-from util4tests import log
+from util4tests import log, enable_test_logging
 
 
 TEST_INPUT_FOLDER = Path(__file__).parent / "./input"
 
 
-load_dotenv()
+enable_test_logging()  # note that this includes loading .env into os.getenv
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def quicktest() -> bool:
     """ bool setting indicating to skip lengthy tests 
     setting driven by setting env variable "QUICKTEST" to anything but 0 or ""
@@ -25,7 +24,7 @@ def quicktest() -> bool:
     return bool(os.getenv("QUICKTEST", 0))
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def _mem_rdf_store() -> RDFStore:
     """in memory store
     """
@@ -33,24 +32,24 @@ def _mem_rdf_store() -> RDFStore:
     return create_rdf_store()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def _uri_rdf_store() -> RDFStore:
     """proxy to available graphdb store
     But only if environment variables are set and service is available
     else None (which will result in trimming it from rdf_stores fixture)
     """
-    read_uri = os.getenv("TEST_SPARQL_READ_URI", None)
     write_uri = os.getenv("TEST_SPARQL_WRITE_URI", None)
+    read_uri = os.getenv("TEST_SPARQL_READ_URI", write_uri)  # fall back to this
     # if no URI (or not accessible) provided - skip this by returning None
     if read_uri is None and write_uri is None:
         log.debug("not creating uri rdf store in test - no uri provided")
         return None
     for uri in (read_uri, write_uri):
         if not requests.get(uri).ok:
-            log.debug("not creating uri rdf store in test - provided {uri=} not accesible")
+            log.debug(f"not creating uri rdf store in test - provided {uri=} not accesible")
             return None
     # else -- all is well
-    log.debug("creating uri rdf store proxy to ({read_uri=}, {write_uri=})")
+    log.debug(f"creating uri rdf store proxy to ({read_uri=}, {write_uri=})")
     return create_rdf_store(read_uri, write_uri)
 
 
