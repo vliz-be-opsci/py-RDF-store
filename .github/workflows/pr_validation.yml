@@ -43,5 +43,3 @@ jobs:
         if: ${{steps.filter.outputs.package == 'true' }} || ${{steps.filter.outputs.tests == 'true' }}
         run: |
           make test-coverage-with-graphdb
-
-
