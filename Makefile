@@ -30,7 +30,7 @@ init-docs: startup
 
 docs:
 	if ! [ -d "./docs" ]; then poetry run sphinx-quickstart -q --ext-autodoc --ext-githubpages --ext-viewcode --sep --project $(PROJECT) --author '${AUTHOR}' docs; fi
-	cp ./pre_docs/* ./docs/source/
+	cp ./source_docs/* ./docs/source/
 	sleep 1
 	poetry run sphinx-apidoc -o ./docs/source ./$(PROJECT)
 	poetry run sphinx-build -b html ./docs/source ./docs/build/html
