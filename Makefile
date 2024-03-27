@@ -29,12 +29,15 @@ init-docs: startup
 	poetry install --with 'docs'
 
 docs:
-	if ! [ -d "./docs" ]; then poetry run sphinx-quickstart -q --ext-autodoc --ext-githubpages --ext-viewcode --sep --project $(PROJECT) --author '${AUTHOR}' docs; fi
-	cp ./source_docs/* ./docs/source/
+	poetry run sphinx-quickstart -q --ext-autodoc --ext-githubpages --ext-viewcode --sep --project $(PROJECT) --author '${AUTHOR} -f' source_docs
+
+docs-build:
+	poetry run sphinx-quickstart -q --ext-autodoc --ext-githubpages --ext-viewcode --sep --project $(PROJECT) --author '${AUTHOR} -f' source_docs
+	cp ./docs/* ./source_docs/source/
 	sleep 1
-	poetry run sphinx-apidoc -o ./docs/source ./$(PROJECT)
-	poetry run sphinx-build -b html ./docs/source ./docs/build/html
-	cp ./docs/source/custom.css ./docs/build/html/_static/custom.css
+	poetry run sphinx-apidoc -o ./source_docs/source ./$(PROJECT)
+	poetry run sphinx-build -b html ./source_docs/source ./source_docs/build/html
+	cp ./source_docs/source/custom.css ./source_docs/build/html/_static/custom.css
 test:
 	poetry run pytest ${TEST_PATH}
 
