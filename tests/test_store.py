@@ -54,7 +54,7 @@ def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
         log.debug(f"{rdf_store_type} :: {spo_result=} | {spo_result_type=}")
         assert isinstance(spo_result, Result), (
             f"{rdf_store_type} :: "
-            "{spo_result=} | {spo_result_type} is not a real Result"
+            f"{spo_result=} | {spo_result_type} is not a real Result"
         )
         results: List[Tuple[str]] = [
             tuple(str(u) for u in r) for r in spo_result
@@ -84,13 +84,13 @@ def test_unkown_drop(rdf_stores: Iterable[RDFStore]):
         # and we should have a trace of its delete
         assert rdf_store.verify_max_age(ns, 1), (
             f"{rdf_store_type} :: "
-            "named_graph {ns=} latest change should be traceable"
+            f"named_graph {ns=} latest change should be traceable"
         )
 
         log.debug(f"{rdf_store_type} :: {list(rdf_store.named_graphs)=}")
         assert ns in rdf_store.named_graphs, (
             f"{rdf_store_type} :: "
-            "named_graph {ns=} should be in list of known graphs"
+            f"named_graph {ns=} should be in list of known graphs"
         )
 
         # now remove the update-trace
@@ -110,9 +110,9 @@ def assert_file_ingest(
     sparql_test: str = None,
     expected_count: int = None,
 ):
-    assert (
-        fpath.exists()
-    ), f"can not test insertion of non-existent file {fpath=}"
+    assert fpath.exists(), (
+        "can not test insertion of " f"non-existent file {fpath=}"
+    )
 
     ns = f"urn:test:{fpath.stem}"
 
@@ -138,7 +138,7 @@ def assert_file_ingest(
     result = rdf_store.select(sparql_test, ns)
     assert len(result) == expected_count, (
         f"{rdf_store_type} :: "
-        "test after insert of {fpath=} into {ns=} did not yield {expected_count=}"
+        f"test after insert of {fpath=} into {ns=} did not yield {expected_count=}"
     )
 
     return fg, ns, result
@@ -185,7 +185,7 @@ def test_insert_large_statement(rdf_stores: Iterable[RDFStore]):
         result: List[Tuple[str]] = [tuple(str(u) for u in r) for r in result]
         assert result[-1][0] == pub_abstr, (
             f"{rdf_store_type} :: "
-            "mismatch {pub_abstr=} != '{result[-1][0]}'"
+            f"mismatch {pub_abstr=} != '{result[-1][0]}'"
         )
 
 

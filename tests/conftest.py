@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Iterable
 
 import pytest
-import requests
 from rdflib import Graph, URIRef
 from util4tests import enable_test_logging, log
 
