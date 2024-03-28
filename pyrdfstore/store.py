@@ -156,7 +156,10 @@ class URIRDFStore(RDFStore):
         else:
             select_graph = Graph(store=self.sparql_store)
         result: Result = select_graph.query(sparql)
-        log.debug(f"from SPARQLStore :: {type(result)=} -> {result=}")
+        assert isinstance(result, Result), (
+            "Failed getting proper result for:" f"{sparql=}, got {result=}"
+        )
+        log.debug(f"Result from SPARQLStore :: {type(result)=} -> {result=}")
         return result
 
     def insert(self, graph: Graph, named_graph: Optional[str] = NIL_NS):
@@ -173,7 +176,7 @@ class URIRDFStore(RDFStore):
     ) -> Iterable[str]:
         """Consults and changes the admin-graph of lastmod entries per named_graph.
 
-        :param named_graph: the named_graph to be handled, must be provide, but can be None to return the list of all available names
+        :param named_graph: the named_graph to be handled, required, can be None to return the list of all available names
         :type named_graph: str (or None)
         :param lastmod: the new lastmod timestamp for this named_graph, if None (or not provided) this will 'forget' the named_graph
         :type lastmod: datetime
