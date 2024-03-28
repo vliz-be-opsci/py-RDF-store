@@ -1,17 +1,16 @@
 #! /usr/bin/env python
 from pathlib import Path
 from time import sleep
-from typing import List, Tuple, Iterable
+from typing import Iterable, List, Tuple
 from uuid import uuid4
 
 import pytest
+from conftest import TEST_INPUT_FOLDER
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.query import Result
-from conftest import TEST_INPUT_FOLDER
 from util4tests import log, run_single_test
 
 from pyrdfstore.store import RDFStore
-
 
 DCT: Namespace = Namespace("http://purl.org/dc/terms/#")
 DCT_ABSTRACT: URIRef = DCT.abstract
@@ -22,7 +21,9 @@ SELECT_ALL_SPO = "SELECT ?s ?p ?o WHERE { ?s ?p ?o . }"
 def test_fixtures(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
     for rdf_store in rdf_stores:
         rdf_store_type = type(rdf_store).__name__
-        assert rdf_store is not None, f"{rdf_store_type} :: fixture rdf-store should be available."
+        assert rdf_store is not None, (
+            f"{rdf_store_type} :: " "fixture rdf-store should be available."
+        )
     assert (
         example_graphs is not None
     ), "fixture example_graphs should be available"
@@ -51,7 +52,10 @@ def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
         spo_result = rdf_store.select(sparql)
         spo_result_type = type(spo_result).__name__
         log.debug(f"{rdf_store_type} :: {spo_result=} | {spo_result_type=}")
-        assert isinstance(spo_result, Result), f"{rdf_store_type} :: {spo_result=} | {spo_result_type} is not a real Result"
+        assert isinstance(spo_result, Result), (
+            f"{rdf_store_type} :: "
+            "{spo_result=} | {spo_result_type} is not a real Result"
+        )
         results: List[Tuple[str]] = [
             tuple(str(u) for u in r) for r in spo_result
         ]
@@ -78,14 +82,16 @@ def test_unkown_drop(rdf_stores: Iterable[RDFStore]):
         rdf_store.drop_graph(ns)
         # we should just get here without an error
         # and we should have a trace of its delete
-        assert rdf_store.verify_max_age(
-            ns, 1
-        ), f"{rdf_store_type} :: named_graph {ns=} latest change should be traceable"
+        assert rdf_store.verify_max_age(ns, 1), (
+            f"{rdf_store_type} :: "
+            "named_graph {ns=} latest change should be traceable"
+        )
 
         log.debug(f"{rdf_store_type} :: {list(rdf_store.named_graphs)=}")
-        assert (
-            ns in rdf_store.named_graphs
-        ), f"{rdf_store_type} :: named_graph {ns=} should be in list of known graphs"
+        assert ns in rdf_store.named_graphs, (
+            f"{rdf_store_type} :: "
+            "named_graph {ns=} should be in list of known graphs"
+        )
 
         # now remove the update-trace
         rdf_store.forget_graph(ns)
@@ -130,9 +136,10 @@ def assert_file_ingest(
         expected_count = num_triples
 
     result = rdf_store.select(sparql_test, ns)
-    assert (
-        len(result) == expected_count
-    ), f"{rdf_store_type} :: test after insert of {fpath=} into {ns=} did not yield {expected_count=}"
+    assert len(result) == expected_count, (
+        f"{rdf_store_type} :: "
+        "test after insert of {fpath=} into {ns=} did not yield {expected_count=}"
+    )
 
     return fg, ns, result
 
@@ -141,7 +148,9 @@ def assert_file_ingest(
 def test_insert_simple_with_bnodes(rdf_stores: Iterable[RDFStore]):
     for rdf_store in rdf_stores:
         # check the ingest of a simple example using blank nodes
-        assert_file_ingest(rdf_store, TEST_INPUT_FOLDER / "simple_with_bnodes.ttl")
+        assert_file_ingest(
+            rdf_store, TEST_INPUT_FOLDER / "simple_with_bnodes.ttl"
+        )
 
 
 @pytest.mark.usefixtures("rdf_stores")
@@ -174,11 +183,18 @@ def test_insert_large_statement(rdf_stores: Iterable[RDFStore]):
 
         # Verify that the large content rountripped nicely
         result: List[Tuple[str]] = [tuple(str(u) for u in r) for r in result]
-        assert result[-1][0] == pub_abstr, f"{rdf_store_type} :: mismatch {pub_abstr=} != '{result[-1][0]}'"
+        assert result[-1][0] == pub_abstr, (
+            f"{rdf_store_type} :: "
+            "mismatch {pub_abstr=} != '{result[-1][0]}'"
+        )
 
 
 @pytest.mark.usefixtures("rdf_stores", "example_graphs", "quicktest")
-def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph], quicktest: bool):
+def test_insert_named(
+    rdf_stores: Iterable[RDFStore],
+    example_graphs: List[Graph],
+    quicktest: bool,
+):
 
     # this test plans to create 2 named_graphs,
     # so they contain some overlapped ranges from the example_graphs fixture
@@ -206,7 +222,7 @@ def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph
                 tuple(str(u) for u in r) for r in rdf_store.select(sparql)
             ]
 
-            log.debug(f"{rdf_store_type} :: found in {ns=} --> {len(results)=}")
+            log.debug(f"{rdf_store_type} :: in {ns=} -> {len(results)=}")
             assert len(results) >= len(nums)
 
             for i in nums:
@@ -219,29 +235,32 @@ def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph
                 ), f"{rdf_store_type} :: expected triple for index { i } not found in result"
 
         for plan in plans:
-            assert rdf_store.verify_max_age(
-                ns, 1
-            ), f"{rdf_store_type} :: graphs should be inserted and checked in less then a minute"
+            assert rdf_store.verify_max_age(ns, 1), (
+                f"{rdf_store_type} :: "
+                "graphs should be inserted and checked in less then a minute"
+            )
 
         if quicktest:
             # skip the remainder of the test involving wait times
             continue
         # else do the rest of the test which even involves taking wait time...
 
-        log.info("getting into the lengthy part of the test - skip by setting 'quicktest'")
+        log.info("into slow part of the test - skip by setting 'quicktest'")
         sleep(60)  # hey, seriuosly? wait a minute!
         for plan in plans:
-            assert not rdf_store.verify_max_age(
-                ns, 1
-            ), f"{rdf_store_type} :: after a minute of nothing, those should be older then a minute"
+            assert not rdf_store.verify_max_age(ns, 1), (
+                f"{rdf_store_type} :: "
+                "after a minute of nothing, those should be older then a minute"
+            )
 
         # now drop the second graph, and check for the (should be none!) effect on the first
         ns1, nums1 = plans[0]["ns"], plans[0]["nums"]
         ns2 = plans[1]["ns"]
         rdf_store.drop_graph(ns2)
-        assert rdf_store.verify_max_age(
-            ns2, 1
-        ), f"{rdf_store_type} :: dropped graph should be marked as changed again"
+        assert rdf_store.verify_max_age(ns2, 1), (
+            f"{rdf_store_type} :: "
+            "dropped graph should be marked as changed again"
+        )
 
         # there should be nothing left in ns2
         try:
@@ -250,15 +269,19 @@ def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph
             Exception
         ):  # accept that this could also throw an exception since the graph was dropped!
             result = []
-        assert len(result) == 0, f"{rdf_store_type} :: there should be no results in a dropped ns"
+        assert len(result) == 0, (
+            f"{rdf_store_type} :: "
+            "there should be no results in a dropped ns"
+        )
 
         # there should be nothing changed in ns1
         result: List[Tuple[str]] = [
             tuple(str(u) for u in r) for r in rdf_store.select(sparql, ns1)
         ]
-        assert len(result) == len(
-            nums1
-        ), f"{rdf_store_type} :: there should still be same results in the kept ns"
+        assert len(result) == len(nums1), (
+            f"{rdf_store_type} :: "
+            "there should still be same results in the kept ns"
+        )
         for i in nums1:
             assert (
                 tuple(
@@ -272,9 +295,10 @@ def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph
         result: List[Tuple[str]] = [
             tuple(str(u) for u in r) for r in rdf_store.select(sparql)
         ]
-        assert len(result) >= len(
-            nums1
-        ), f"{rdf_store_type} :: there should be at least same results in the overall store"
+        assert len(result) >= len(nums1), (
+            f"{rdf_store_type} :: "
+            "there should be at least same results in the overall store"
+        )
         for i in nums1:
             assert (
                 tuple(
@@ -286,7 +310,9 @@ def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph
 
 
 @pytest.mark.usefixtures("rdf_stores", "sample_file_graph")
-def test_select_property_trajectory(rdf_stores: Iterable[RDFStore], sample_file_graph):
+def test_select_property_trajectory(
+    rdf_stores: Iterable[RDFStore], sample_file_graph
+):
     # SPARQL to select trajectory of a property
     sparql = """
     SELECT ?s ?o WHERE {?s <http://purl.org/dc/terms/abstract>/<http://purl.org/dc/terms/else> ?o .}
@@ -326,12 +352,9 @@ def test_insert_with_skolemize(rdf_stores: Iterable[RDFStore]):
             log.debug(f"{rdf_store_type} :: {n=} : {row=}")
             n += 1
 
-        # below is weird -- what why how ???
-        # test_len = (
-        #    0 if len(result_before) == 1 else len(result_before)
-        # ) edge case here where the results return a 400 error as a row
-
-        assert len(result) == len(result_before) + 1, f"{rdf_store_type} :: we should have added one abstract !"
+        assert len(result) == len(result_before) + 1, (
+            f"{rdf_store_type} :: " "we should have added one abstract !"
+        )
 
 
 if __name__ == "__main__":

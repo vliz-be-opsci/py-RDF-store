@@ -156,7 +156,9 @@ class URIRDFStore(RDFStore):
         else:
             select_graph = Graph(store=self.sparql_store)
         result: Result = select_graph.query(sparql)
-        assert isinstance(result, Result), f"Failed getting proper result for {sparql=}, got {result=}"
+        assert isinstance(result, Result), (
+            f"Failed getting proper result for:" "{sparql=}, got {result=}"
+        )
         log.debug(f"Result from SPARQLStore :: {type(result)=} -> {result=}")
         return result
 
