@@ -1,6 +1,6 @@
 tests/__pycache__
 .coverage
-docs/
+source_docs/
 dist/
 pyrdfstore/__pycache__
 pyrdfstore.log
