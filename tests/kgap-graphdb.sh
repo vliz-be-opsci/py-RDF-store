@@ -29,8 +29,8 @@ do_start() {
     docker run -d --rm --name ${DCKRNAME} -e GDB_REPO=${REPONAME} -p 7200:7200 ghcr.io/vliz-be-opsci/kgap/kgap_graphdb:latest
     echo "docker 'graphdb' started"
     echo "contact it at http://localhost:7200 and/or use these settings for SPARQL connections:"
-    TEST_SPARQL_READ_URI=http://localhost:7200/repositories/${REPONAME}
-    TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements
+    export TEST_SPARQL_READ_URI=http://localhost:7200/repositories/${REPONAME}
+    export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements
     echo "for tests connecting to the instance use these: (or call this script with 'source' in front)"
     echo "   TEST_SPARQL_READ_URI=${TEST_SPARQL_READ_URI}"
     echo "  TEST_SPARQL_WRITE_URI=${TEST_SPARQL_WRITE_URI}"
@@ -40,6 +40,7 @@ do_start() {
 do_stop() {
     echo "shutting-down local graphdb docker container"
     docker stop ${DCKRNAME} || (echo "Aborted script to stop ${DCKRNAME}" && exit 1)
+    unset TEST_SPARQL_READ_URI TEST_SPARQL_WRITE_URI
     echo "docker 'graphdb' stopped"
 }
 
