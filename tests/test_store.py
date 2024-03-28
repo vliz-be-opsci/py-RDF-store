@@ -382,13 +382,16 @@ def test_sparql_with_regex_and_prefix(rdf_stores: Iterable[RDFStore]):
         rdf_store.insert(g, ns)
         result = rdf_store.select(sparql, ns)
         assert isinstance(result, Result), (
-            f"{rdf_store_type} :: " "issue/29 cannot execute selects with prefix and regex parts"
+            f"{rdf_store_type} :: "
+            "issue/29 cannot execute selects with prefix and regex parts"
         )
         assert len(result) == num, (
             f"{rdf_store_type} :: "
             f"issue/29 unexpected response length {len(result)=} not {num=}"
         )
-        log.debug(f"{rdf_store_type} :: no issue/29 executed {sparql=} and got {len(result)=}")
+        log.debug(
+            f"{rdf_store_type} :: no issue/29 executed {sparql=} and got {len(result)=}"
+        )
 
 
 if __name__ == "__main__":
