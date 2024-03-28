@@ -394,7 +394,6 @@ def test_sparql_with_regex_and_prefix(rdf_stores: Iterable[RDFStore]):
         )
 
 
-
 @pytest.mark.usefixtures("rdf_stores")
 def test_separate_blanknodes(rdf_stores: Iterable[RDFStore]):
     """specific test for issue #32
@@ -404,7 +403,9 @@ def test_separate_blanknodes(rdf_stores: Iterable[RDFStore]):
     base: str = f"https://example.org/base-{lbl}/"
     num: int = 5
     start: int = 200
-    g: Graph = make_sample_graph(range(start, start+num), base=base, bnode_subjects=True)
+    g: Graph = make_sample_graph(
+        range(start, start + num), base=base, bnode_subjects=True
+    )
     ns: str = f"urn:test:uuid:{uuid4()}"
     sparql: str = "select distinct ?s where { ?s ?p ?o .}"
 

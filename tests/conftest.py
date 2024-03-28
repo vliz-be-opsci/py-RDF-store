@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 import pytest
-from rdflib import Graph, URIRef, BNode
+from rdflib import BNode, Graph, URIRef
 from util4tests import enable_test_logging, log
 
 from pyrdfstore import RDFStore, create_rdf_store
@@ -76,7 +76,9 @@ def sample_file_graph():
 
 
 def make_sample_graph(
-    items: Iterable, base: Optional[str] = "https://example.org/", bnode_subjects: Optional[bool] = False
+    items: Iterable,
+    base: Optional[str] = "https://example.org/",
+    bnode_subjects: Optional[bool] = False,
 ) -> Graph:
     """makes a small graph for testing purposes
     the graph is build up of triples that follow the pattern {base}{part}-{item}
@@ -89,17 +91,23 @@ def make_sample_graph(
     :type items: Iterable, note that all members will simply be str()-ified into the uri building
     :param base: (optional) baseuri to apply into the pattern
     :type base: str
-    :param bnode_subjects: boolean indicating that the subject
+    :param bnode_subjects: indicating that the subject
+    :type bnode_subjects: bool
     :return: the graph
     :rtype
     """
+
     def replace_with_bnode(part):
         return bool(bnode_subjects and part == "subject")
 
     g = Graph()
     for item in items:
         triple = tuple(
-            URIRef(f"{base}{part}-{item}") if not replace_with_bnode(part) else BNode()
+            (
+                URIRef(f"{base}{part}-{item}")
+                if not replace_with_bnode(part)
+                else BNode()
+            )
             for part in ["subject", "predicate", "object"]
         )
         g.add(triple)
