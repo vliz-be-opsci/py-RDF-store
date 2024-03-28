@@ -65,7 +65,7 @@ def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
         for i in nums:
             assert (
                 tuple(
-                    f"https://example.org/{part}#{i}"
+                    f"https://example.org/{part}-{i}"
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
@@ -228,7 +228,7 @@ def test_insert_named(
             for i in nums:
                 assert (
                     tuple(
-                        f"https://example.org/{part}#{i}"
+                        f"https://example.org/{part}-{i}"
                         for part in ["subject", "predicate", "object"]
                     )
                     in results
@@ -285,7 +285,7 @@ def test_insert_named(
         for i in nums1:
             assert (
                 tuple(
-                    f"https://example.org/{part}#{i}"
+                    f"https://example.org/{part}-{i}"
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
@@ -302,7 +302,7 @@ def test_insert_named(
         for i in nums1:
             assert (
                 tuple(
-                    f"https://example.org/{part}#{i}"
+                    f"https://example.org/{part}-{i}"
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
@@ -392,6 +392,35 @@ def test_sparql_with_regex_and_prefix(rdf_stores: Iterable[RDFStore]):
         log.debug(
             f"{rdf_store_type} :: no issue/29 executed {sparql=} and got {len(result)=}"
         )
+
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_separate_blanknodes(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #32
+    making sure distinct blanknodes are indeed considered separate after ingest
+    """
+    lbl: str = "issue-32"
+    base: str = f"https://example.org/base-{lbl}/"
+    num: int = 5
+    start: int = 200
+    g: Graph = make_sample_graph(range(start, start+num), base=base, bnode_subjects=True)
+    ns: str = f"urn:test:uuid:{uuid4()}"
+    sparql: str = "select distinct ?s where { ?s ?p ?o .}"
+
+    for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+        rdf_store.insert(g, ns)
+        result = rdf_store.select(sparql, ns)
+        assert len(result) == num, (
+            f"{rdf_store_type} :: "
+            f"issue/32 unexpected response length {len(result)=} not {num=}"
+        )
+        log.debug(
+            f"{rdf_store_type} :: no issue/32 executed {sparql=} and got {len(result)=}"
+        )
+
+    # TODO testing with imported files with bnodes in them
 
 
 if __name__ == "__main__":
