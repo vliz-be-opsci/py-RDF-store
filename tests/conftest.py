@@ -75,11 +75,11 @@ def sample_file_graph():
     return loadfilegraph(str(TEST_INPUT_FOLDER / "3293.jsonld"))
 
 
-def make_sample_graph(items: Iterable) -> Graph:
+def make_sample_graph(items: Iterable, base: str = "https://example.org/") -> Graph:
     g = Graph()
     for n in items:
         triple = tuple(
-            URIRef(f"https://example.org/{part}#{n}")
+            URIRef(f"{base}{part}#{n}")
             for part in ["subject", "predicate", "object"]
         )
         g.add(triple)
