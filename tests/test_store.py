@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
+from rdflib.query import Result
 from conftest import TEST_INPUT_FOLDER
 from util4tests import log, run_single_test
 
@@ -47,8 +48,12 @@ def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
         sparql = SELECT_ALL_SPO
         # reformat SPARQLResult as List of Tuple of uri-str
         log.debug(f"{rdf_store_type} :: trying out select {sparql=}")
+        spo_result = rdf_store.select(sparql)
+        spo_result_type = type(spo_result).__name__
+        log.debug(f"{rdf_store_type} :: {spo_result=} | {spo_result_type=}")
+        assert isinstance(spo_result, Result), f"{rdf_store_type} :: {spo_result=} | {spo_result_type} is not a real Result"
         results: List[Tuple[str]] = [
-            tuple(str(u) for u in r) for r in rdf_store.select(sparql)
+            tuple(str(u) for u in r) for r in spo_result
         ]
 
         assert len(results) >= len(nums)
@@ -223,6 +228,7 @@ def test_insert_named(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph
             continue
         # else do the rest of the test which even involves taking wait time...
 
+        log.info("getting into the lengthy part of the test - skip by setting 'quicktest'")
         sleep(60)  # hey, seriuosly? wait a minute!
         for plan in plans:
             assert not rdf_store.verify_max_age(
@@ -298,24 +304,34 @@ def test_select_property_trajectory(rdf_stores: Iterable[RDFStore], sample_file_
 def test_insert_with_skolemize(rdf_stores: Iterable[RDFStore]):
     # Create a test graph with BNODE
     graph = Graph()
-    graph.add((BNode(), DCT_ABSTRACT, Literal("Test abstract")))
+    graph.add((BNode(), DCT_ABSTRACT, Literal("Test abstract of blank node")))
 
     sparql = f"SELECT ?abstract WHERE {{ [] <{DCT_ABSTRACT}> ?abstract }}"
 
     for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+
         result_before = rdf_store.select(sparql)
+        log.debug(f"{result_before=}")
+        log.debug(f"{len(result_before)=}")
 
         # Call the insert method
         rdf_store.insert(graph)
 
         result = rdf_store.select(sparql)
+        log.debug(f"{rdf_store_type} :: {result=}")
+        log.debug(f"{rdf_store_type} :: {len(result)=}")
+        n = 0
+        for row in result:
+            log.debug(f"{rdf_store_type} :: {n=} : {row=}")
+            n += 1
 
         # below is weird -- what why how ???
-        test_len = (
-            0 if len(result_before) == 1 else len(result_before)
-        )  # edge case here where the results return a 400 error as a row
+        # test_len = (
+        #    0 if len(result_before) == 1 else len(result_before)
+        # ) edge case here where the results return a 400 error as a row
 
-        assert len(result) == test_len + 1
+        assert len(result) == len(result_before) + 1, f"{rdf_store_type} :: we should have added one abstract !"
 
 
 if __name__ == "__main__":

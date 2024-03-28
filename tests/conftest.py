@@ -38,10 +38,10 @@ def _uri_rdf_store() -> RDFStore:
     But only if environment variables are set and service is available
     else None (which will result in trimming it from rdf_stores fixture)
     """
-    write_uri = os.getenv("TEST_SPARQL_WRITE_URI", None)
-    read_uri = os.getenv("TEST_SPARQL_READ_URI", write_uri)  # fall back to this
+    read_uri = os.getenv("TEST_SPARQL_READ_URI", None)
+    write_uri = os.getenv("TEST_SPARQL_WRITE_URI", read_uri)
     # if no URI (or not accessible) provided - skip this by returning None
-    if read_uri is None and write_uri is None:
+    if read_uri is None or write_uri is None:
         log.debug("not creating uri rdf store in test - no uri provided")
         return None
     for uri in (read_uri, write_uri):

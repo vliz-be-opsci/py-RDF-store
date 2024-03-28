@@ -156,7 +156,8 @@ class URIRDFStore(RDFStore):
         else:
             select_graph = Graph(store=self.sparql_store)
         result: Result = select_graph.query(sparql)
-        log.debug(f"from SPARQLStore :: {type(result)=} -> {result=}")
+        assert isinstance(result, Result), f"Failed getting proper result for {sparql=}, got {result=}"
+        log.debug(f"Result from SPARQLStore :: {type(result)=} -> {result=}")
         return result
 
     def insert(self, graph: Graph, named_graph: Optional[str] = NIL_NS):

@@ -52,7 +52,7 @@ test-quick:  ## runs tests more quickly by skipping some lengthy ones
 
 test-with-graphdb: ## runs the standard test-suite for all available implementations (requires docker to spin up a sparql endpoint)
 	@(export REPONAME=${REPONAME} && ./tests/kgap-graphdb.sh start-wait)
-	-@(export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test --no-print-directory)
+	-@(export TEST_SPARQL_READ_URI=http://localhost:7200/repositories/${REPONAME} TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test --no-print-directory)
 	@./tests/kgap-graphdb.sh stop
 
 test-coverage:  ## runs the standard test-suite for the memory-graph implementation and produces a coverage report
@@ -60,7 +60,7 @@ test-coverage:  ## runs the standard test-suite for the memory-graph implementat
 
 test-coverage-with-graphdb:  ## runs the standard test-suite for all available implementations and produces a coverage report
 	@(export REPONAME=${REPONAME} && ./tests/kgap-graphdb.sh start-wait)
-	-@(export TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test-coverage --no-print-directory)
+	-@(export TEST_SPARQL_READ_URI=http://localhost:7200/repositories/${REPONAME} TEST_SPARQL_WRITE_URI=http://localhost:7200/repositories/${REPONAME}/statements && $(MAKE) test-coverage --no-print-directory)
 	@./tests/kgap-graphdb.sh stop
 
 check:  ## performs linting on the python code
