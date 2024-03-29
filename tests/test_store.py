@@ -5,7 +5,7 @@ from typing import Iterable, List, Tuple
 from uuid import uuid4
 
 import pytest
-from conftest import TEST_INPUT_FOLDER, make_sample_graph, loadfilegraph
+from conftest import TEST_INPUT_FOLDER, loadfilegraph, make_sample_graph
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.query import Result
 from util4tests import log, run_single_test
@@ -427,7 +427,9 @@ def test_file_with_blanknodes(rdf_stores: Iterable[RDFStore]):
     """specific test for issue #32
     making sure distinct blanknodes are indeed considered separate after ingest
     """
-    g: Graph = loadfilegraph(TEST_INPUT_FOLDER / "issue-32.ttl", format="turtle")
+    g: Graph = loadfilegraph(
+        TEST_INPUT_FOLDER / "issue-32.ttl", format="turtle"
+    )
     num_things_in_file = 4
     ns: str = f"urn:test:uuid:{uuid4()}"
     sparql: str = (

@@ -8,13 +8,13 @@ from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
 
-
 log = logging.getLogger(__name__)
 
 NIL_NS = "urn:_:nil"
 ADMIN_NAMED_GRAPH = "urn:py-rdf-store:admin"
 SCHEMA = Namespace("https://schema.org/")
 SCHEMA_DATEMODIFIED = SCHEMA.dateModified
+g_cfg_kwargs = dict(bind_namespaces="none")
 
 
 def timestamp():
@@ -152,10 +152,10 @@ class URIRDFStore(RDFStore):
         log.debug(f"exec select {sparql=} into {named_graph=}")
         if named_graph is not None:
             select_graph = Graph(
-                store=self.sparql_store, identifier=named_graph, bind_namespaces="none"
+                store=self.sparql_store, identifier=named_graph, **g_cfg_kwargs
             )
         else:
-            select_graph = Graph(store=self.sparql_store, bind_namespaces="none")
+            select_graph = Graph(store=self.sparql_store, **g_cfg_kwargs)
         result: Result = select_graph.query(sparql)
         assert isinstance(result, Result), (
             "Failed getting proper result for:" f"{sparql=}, got {result=}"
@@ -168,7 +168,9 @@ class URIRDFStore(RDFStore):
             self.allows_update
         ), "data can not be inserted into a store if no write_uri is provided"
         log.debug(f"insertion of {len(graph)=} into ({named_graph=})")
-        store_graph = Graph(store=self.sparql_store, identifier=named_graph, bind_namespaces="none")
+        store_graph = Graph(
+            store=self.sparql_store, identifier=named_graph, **g_cfg_kwargs
+        )
         store_graph += graph.skolemize()
         self._update_registry_lastmod(named_graph, timestamp())
 
@@ -190,7 +192,9 @@ class URIRDFStore(RDFStore):
         response = [named_graph] if named_graph is not None else None
 
         adm_graph = Graph(
-            store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH, bind_namespaces="none"
+            store=self.sparql_store,
+            identifier=ADMIN_NAMED_GRAPH,
+            **g_cfg_kwargs,
         )
 
         # construct what we are matching for
@@ -216,7 +220,9 @@ class URIRDFStore(RDFStore):
 
     def lastmod_ts(self, named_graph: str) -> datetime:
         adm_graph = Graph(
-            store=self.sparql_store, identifier=ADMIN_NAMED_GRAPH, bind_namespaces="none"
+            store=self.sparql_store,
+            identifier=ADMIN_NAMED_GRAPH,
+            **g_cfg_kwargs,
         )
         lastmod: Literal = adm_graph.value(
             URIRef(named_graph), SCHEMA_DATEMODIFIED
@@ -225,7 +231,9 @@ class URIRDFStore(RDFStore):
         return lastmod.value if lastmod is not None else None
 
     def drop_graph(self, named_graph: str) -> None:
-        store_graph = Graph(store=self.sparql_store, identifier=named_graph, bind_namespaces="none")
+        store_graph = Graph(
+            store=self.sparql_store, identifier=named_graph, **g_cfg_kwargs
+        )
         self.sparql_store.remove_graph(store_graph)
         self._update_registry_lastmod(named_graph, timestamp())
 
@@ -240,7 +248,7 @@ class URIRDFStore(RDFStore):
 class MemoryRDFStore(RDFStore):
     # check if rdflib.Dataset could not help out here, such would allign more logically and elegantly?
     def __init__(self):
-        self._all: Graph = Graph(bind_namespaces="none")
+        self._all: Graph = Graph(**g_cfg_kwargs)
         self._named_graphs = dict()
         self._admin_registry = dict()
 
@@ -256,7 +264,7 @@ class MemoryRDFStore(RDFStore):
         named_graph_graph = None
         if named_graph is not None:
             if named_graph not in self._named_graphs:
-                self._named_graphs[named_graph] = Graph(bind_namespaces="none")
+                self._named_graphs[named_graph] = Graph(**g_cfg_kwargs)
             named_graph_graph: Graph = self._named_graphs[named_graph]
             named_graph_graph += graph
             self._admin_registry[named_graph] = timestamp()
