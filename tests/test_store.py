@@ -5,7 +5,7 @@ from typing import Iterable, List, Tuple
 from uuid import uuid4
 
 import pytest
-from conftest import TEST_INPUT_FOLDER, make_sample_graph
+from conftest import TEST_INPUT_FOLDER, make_sample_graph, loadfilegraph
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.query import Result
 from util4tests import log, run_single_test
@@ -369,7 +369,7 @@ def test_sparql_with_regex_and_prefix(rdf_stores: Iterable[RDFStore]):
     g: Graph = make_sample_graph(range(start, start + num), base)
     ns: str = f"urn:test:uuid:{uuid4()}"
     sparql: str = (
-        f"prefix bs: <{base}>"
+        f"prefix schema: <{base}>"
         "select *"
         "where { "
         "    [] ?p ?o . "
@@ -390,7 +390,7 @@ def test_sparql_with_regex_and_prefix(rdf_stores: Iterable[RDFStore]):
             f"issue/29 unexpected response length {len(result)=} not {num=}"
         )
         log.debug(
-            f"{rdf_store_type} :: no issue/29 executed {sparql=} and got {len(result)=}"
+            f"{rdf_store_type} :: no issue/29 detected {sparql=} and got {len(result)=}"
         )
 
 
@@ -418,10 +418,35 @@ def test_separate_blanknodes(rdf_stores: Iterable[RDFStore]):
             f"issue/32 unexpected response length {len(result)=} not {num=}"
         )
         log.debug(
-            f"{rdf_store_type} :: no issue/32 executed {sparql=} and got {len(result)=}"
+            f"{rdf_store_type} :: no issue/32 detected {sparql=} and got {len(result)=}"
         )
 
-    # TODO testing with imported files with bnodes in them
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_file_with_blanknodes(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #32
+    making sure distinct blanknodes are indeed considered separate after ingest
+    """
+    g: Graph = loadfilegraph(TEST_INPUT_FOLDER / "issue-32.ttl", format="turtle")
+    num_things_in_file = 4
+    ns: str = f"urn:test:uuid:{uuid4()}"
+    sparql: str = (
+        "prefix schema: <https://schema.org/>"
+        "select distinct ?s "
+        "where { ?s a schema:Thing .}"
+    )
+
+    for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+        rdf_store.insert(g, ns)
+        result = rdf_store.select(sparql, ns)
+        assert len(result) == num_things_in_file, (
+            f"{rdf_store_type} :: "
+            f"issue/32 unexpected response length {len(result)=} not {num_things_in_file=}"
+        )
+        log.debug(
+            f"{rdf_store_type} :: no issue/32 detected {sparql=} and got {len(result)=}"
+        )
 
 
 if __name__ == "__main__":
