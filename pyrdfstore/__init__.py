@@ -4,7 +4,7 @@
 :platform: Unix, Windows
 :synopsis: A library for creating and interacting with RDF stores
 
-.. moduleauthor:: Vliz VZW open science <opsci@vliz.be>
+.. moduleauthor:: "Open Science Team of the Flanders Marine Institute, VLIZ vzw" <opsci@vliz.be>
 """
 
 from .build import create_rdf_store

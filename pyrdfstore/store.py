@@ -1,6 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from datetime import UTC as UTC_tz
 from datetime import datetime
 from typing import Optional
 
@@ -18,7 +19,7 @@ g_cfg_kwargs = dict(bind_namespaces="none")
 
 
 def timestamp():
-    return datetime.utcnow()
+    return datetime.now(UTC_tz)
 
 
 class RDFStore(ABC):
@@ -63,7 +64,7 @@ class RDFStore(ABC):
         :return: True if the graph has aged less than the passed number of minutes in the argument, else False
         :rtype: bool
         """
-        named_graph_lastmod = self.lastmod_ts(named_graph)
+        named_graph_lastmod = self.lastmod_ts(named_graph).astimezone(UTC_tz)
         if named_graph_lastmod is None:
             return False
         ts = timestamp()
@@ -74,6 +75,9 @@ class RDFStore(ABC):
     @abstractmethod
     def lastmod_ts(self, named_graph: str) -> datetime:
         """returns the update timestamp of the specified graph
+        Note: the implementations should make the stored and returned datetime object
+          1. timezone - aware and
+          2. placed in the UTC_tz
 
         :param named_graph: the uri describing the named_graph to get the lastmod timestamp of
         :type named_graph: str

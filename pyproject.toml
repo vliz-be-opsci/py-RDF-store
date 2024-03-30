@@ -2,10 +2,10 @@
 name = "pyrdfstore"
 version = "0.1.0"
 description = ""
-authors = ["Decruw Cedric <cedric.decruw@vliz.be>"]
+authors = ["Open Science Team of the Flanders Marine Institute, VLIZ vzw <opsci@vliz.be>"]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0.0"
+python = ">=3.11,<4.0.0"
 rdflib = "*"
 validators = "^0.22.0"
 sparqlwrapper = "^2.0.0"
