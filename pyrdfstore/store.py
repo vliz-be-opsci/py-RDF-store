@@ -1,8 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from datetime import UTC as UTC_tz
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from rdflib import Graph, Literal, Namespace, URIRef
@@ -11,6 +10,7 @@ from rdflib.query import Result
 
 log = logging.getLogger(__name__)
 
+UTC_tz = timezone.utc
 NIL_NS = "urn:_:nil"
 ADMIN_NAMED_GRAPH = "urn:py-rdf-store:admin"
 SCHEMA = Namespace("https://schema.org/")
