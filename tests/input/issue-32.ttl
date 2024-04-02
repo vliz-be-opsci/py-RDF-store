@@ -1,0 +1,18 @@
+@prefix ex:     <https://example.org/base-issue-32/> .
+@prefix schema: <https://schema.org/> .
+
+_:bn-1 a schema:Thing.
+_:bn-1 schema:name "the locally identified blanknode-1 thing"@en.
+
+[] schema:name "the blanknode untyped owner"@en;
+    ex:has [ 
+        a schema:Thing;
+        schema:name "the inline blanknode property 1 thing"@en;
+    ]; 
+    ex:has [ 
+        a schema:Thing;
+        schema:name "the inline blanknode property 2 thing"@en;
+    ], [ 
+        a schema:Thing;
+        schema:name "the inline blanknode property 3 thing"@en;
+    ].

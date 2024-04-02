@@ -5,7 +5,7 @@ from typing import Iterable, List, Tuple
 from uuid import uuid4
 
 import pytest
-from conftest import TEST_INPUT_FOLDER
+from conftest import TEST_INPUT_FOLDER, loadfilegraph, make_sample_graph
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.query import Result
 from util4tests import log, run_single_test
@@ -65,7 +65,7 @@ def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
         for i in nums:
             assert (
                 tuple(
-                    f"https://example.org/{part}#{i}"
+                    f"https://example.org/{part}-{i}"
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
@@ -228,7 +228,7 @@ def test_insert_named(
             for i in nums:
                 assert (
                     tuple(
-                        f"https://example.org/{part}#{i}"
+                        f"https://example.org/{part}-{i}"
                         for part in ["subject", "predicate", "object"]
                     )
                     in results
@@ -285,7 +285,7 @@ def test_insert_named(
         for i in nums1:
             assert (
                 tuple(
-                    f"https://example.org/{part}#{i}"
+                    f"https://example.org/{part}-{i}"
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
@@ -302,7 +302,7 @@ def test_insert_named(
         for i in nums1:
             assert (
                 tuple(
-                    f"https://example.org/{part}#{i}"
+                    f"https://example.org/{part}-{i}"
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
@@ -354,6 +354,100 @@ def test_insert_with_skolemize(rdf_stores: Iterable[RDFStore]):
 
         assert len(result) == len(result_before) + 1, (
             f"{rdf_store_type} :: " "we should have added one abstract !"
+        )
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_sparql_with_regex_and_prefix(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #29
+    making sure sparql statements with prefix and regex statements are working
+    """
+    lbl: str = "issue-29"
+    base: str = f"https://example.org/base-{lbl}/"
+    num: int = 5
+    start: int = 100
+    g: Graph = make_sample_graph(range(start, start + num), base)
+    ns: str = f"urn:test:uuid:{uuid4()}"
+    sparql: str = (
+        f"prefix schema: <{base}>"
+        "select *"
+        "where { "
+        "    [] ?p ?o . "
+        f"    filter(regex(str(?p), '{lbl}'))"
+        "}"
+    )
+
+    for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+        rdf_store.insert(g, ns)
+        result = rdf_store.select(sparql, ns)
+        assert isinstance(result, Result), (
+            f"{rdf_store_type} :: "
+            "issue/29 cannot execute selects with prefix and regex parts"
+        )
+        assert len(result) == num, (
+            f"{rdf_store_type} :: "
+            f"issue/29 unexpected response length {len(result)=} not {num=}"
+        )
+        log.debug(
+            f"{rdf_store_type} :: no issue/29 detected {sparql=} and got {len(result)=}"
+        )
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_separate_blanknodes(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #32
+    making sure distinct blanknodes are indeed considered separate after ingest
+    """
+    lbl: str = "issue-32"
+    base: str = f"https://example.org/base-{lbl}/"
+    num: int = 5
+    start: int = 200
+    g: Graph = make_sample_graph(
+        range(start, start + num), base=base, bnode_subjects=True
+    )
+    ns: str = f"urn:test:uuid:{uuid4()}"
+    sparql: str = "select distinct ?s where { ?s ?p ?o .}"
+
+    for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+        rdf_store.insert(g, ns)
+        result = rdf_store.select(sparql, ns)
+        assert len(result) == num, (
+            f"{rdf_store_type} :: "
+            f"issue/32 unexpected response length {len(result)=} not {num=}"
+        )
+        log.debug(
+            f"{rdf_store_type} :: no issue/32 detected {sparql=} and got {len(result)=}"
+        )
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_file_with_blanknodes(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #32
+    making sure distinct blanknodes are indeed considered separate after ingest
+    """
+    g: Graph = loadfilegraph(
+        TEST_INPUT_FOLDER / "issue-32.ttl", format="turtle"
+    )
+    num_things_in_file = 4
+    ns: str = f"urn:test:uuid:{uuid4()}"
+    sparql: str = (
+        "prefix schema: <https://schema.org/>"
+        "select distinct ?s "
+        "where { ?s a schema:Thing .}"
+    )
+
+    for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+        rdf_store.insert(g, ns)
+        result = rdf_store.select(sparql, ns)
+        assert len(result) == num_things_in_file, (
+            f"{rdf_store_type} :: "
+            f"issue/32 unexpected response length {len(result)=} not {num_things_in_file=}"
+        )
+        log.debug(
+            f"{rdf_store_type} :: no issue/32 detected {sparql=} and got {len(result)=}"
         )
 
 

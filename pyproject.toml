@@ -2,7 +2,7 @@
 name = "pyrdfstore"
 version = "0.1.0"
 description = ""
-authors = ["Decruw Cedric <cedric.decruw@vliz.be>"]
+authors = ["Open Science Team of the Flanders Marine Institute, VLIZ vzw <opsci@vliz.be>"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0.0"
