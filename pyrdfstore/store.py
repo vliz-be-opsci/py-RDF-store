@@ -292,9 +292,10 @@ class MemoryRDFStore(RDFStore):
 
 class RDFStoreDecorator(RDFStore):
     """
-    Base-class for «Decorator» implementations that behave like a store, 
+    Base-class for «Decorator» implementations that behave like a store,
     by adding features and just wrapping them.
     """
+
     def __init__(self, store: RDFStore):
         """
         :param store: the actual store to wrap and decorate
