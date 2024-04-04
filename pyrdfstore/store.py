@@ -288,3 +288,35 @@ class MemoryRDFStore(RDFStore):
 
     def forget_graph(self, named_graph: str) -> None:
         self._admin_registry.pop(named_graph)
+
+
+class RDFStoreDecorator(RDFStore):
+    """
+    Base-class for «Decorator» implementations that behave like a store, 
+    by adding features and just wrapping them.
+    """
+    def __init__(self, store: RDFStore):
+        """
+        :param store: the actual store to wrap and decorate
+        :type store: RDFStore
+        """
+        self._core = store
+
+    def select(self, sparql: str, named_graph: Optional[str] = None) -> Result:
+        return self._core.select(sparql, named_graph)
+
+    def insert(self, graph: Graph, named_graph: Optional[str] = None):
+        return self._core.insert(graph, named_graph)
+
+    def lastmod_ts(self, named_graph: str) -> datetime:
+        return self._core.lastmod_ts(named_graph)
+
+    def drop_graph(self, named_graph: str) -> None:
+        return self._core.drop_graph(named_graph)
+
+    @property
+    def named_graphs(self) -> Iterable[str]:
+        return self._core.named_graphs
+
+    def forget_graph(self, named_graph: str) -> None:
+        return self._core.forget_graph(named_graph)
