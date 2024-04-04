@@ -64,9 +64,10 @@ class RDFStore(ABC):
         :return: True if the graph has aged less than the passed number of minutes in the argument, else False
         :rtype: bool
         """
-        named_graph_lastmod = self.lastmod_ts(named_graph).astimezone(UTC_tz)
+        named_graph_lastmod = self.lastmod_ts(named_graph)
         if named_graph_lastmod is None:
             return False
+        named_graph_lastmod = named_graph_lastmod.astimezone(UTC_tz)
         ts = timestamp()
         return bool(
             (ts - named_graph_lastmod).total_seconds() <= age_minutes * 60
