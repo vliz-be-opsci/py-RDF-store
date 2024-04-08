@@ -34,7 +34,7 @@ def test_file_with_blanknodes(rdf_stores: Iterable[RDFStore]):
         TEST_INPUT_FOLDER / "issue-32.ttl", format="turtle"
     )
     num_things_in_file = 4
-    ns: str = f"urn:test:uuid:{uuid4()}"
+    ns: str = f"urn:test-blanknodes:uuid:{uuid4()}"
     sparql: str = (
         "prefix schema: <https://schema.org/>"
         "select distinct ?s "
@@ -52,6 +52,76 @@ def test_file_with_blanknodes(rdf_stores: Iterable[RDFStore]):
         )
         log.debug(
             f"{rdf_store_type} :: no issue/32 detected {sparql=} "
+            f"and got {len(result)=}"
+        )
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_file_with_blanknodes_multiple_graphs(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #42
+    making sure distinct blanknodes are indeed considered separate after ingest
+    even if loaded from different identical files
+    """
+    N: int = 3  # creating 3 distinct identical graphs
+    graphs: Iterable[Graph] = tuple(
+        loadfilegraph(TEST_INPUT_FOLDER / "issue-32.ttl", format="turtle")
+        for i in range(N)
+    )
+    num_things_in_file = 4
+    ns: str = f"urn:test-blanknodes-42:uuid:{uuid4()}"
+    sparql: str = (
+        "prefix schema: <https://schema.org/>"
+        "select distinct ?s "
+        "where { ?s a schema:Thing .}"
+    )
+
+    for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+        for g in graphs:
+            rdf_store.insert(g, ns)
+        result = rdf_store.select(sparql, ns)
+        assert len(result) == N*num_things_in_file, (
+            f"{rdf_store_type} :: "
+            f"issue/42 unexpected response length {len(result)=} "
+            f"not {N*num_things_in_file=}"
+        )
+        log.debug(
+            f"{rdf_store_type} :: no issue/42 detected {sparql=} "
+            f"and got {len(result)=}"
+        )
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_realfile_with_blanknodes_multiple_graphs(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #42
+    making sure distinct blanknodes are indeed considered separate after ingest
+    even if loaded from different identical files
+    """
+    N: int = 3  # creating 3 distinct identical graphs
+    graphs: Iterable[Graph] = tuple(
+        loadfilegraph(TEST_INPUT_FOLDER / "marineinfo-publication-365467.ttl", format="turtle")
+        for i in range(N)
+    )
+    num_persons_in_file = 23
+    ns: str = f"urn:test-pub-blanknodes-42:uuid:{uuid4()}"
+    sparql: str = (
+        "prefix schema: <https://schema.org/>"
+        "select distinct ?s "
+        "where { ?s a schema:Person .}"
+    )
+
+    for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+        for g in graphs:
+            rdf_store.insert(g, ns)
+        result = rdf_store.select(sparql, ns)
+        assert len(result) == N*num_persons_in_file, (
+            f"{rdf_store_type} :: "
+            f"issue/42 unexpected response length {len(result)=} "
+            f"not {N*num_persons_in_file=}"
+        )
+        log.debug(
+            f"{rdf_store_type} :: no issue/42 detected {sparql=} "
             f"and got {len(result)=}"
         )
 
@@ -131,7 +201,7 @@ def test_separate_blanknodes_in_distinct_graphs(
     start: int = 420
     graphs: Iterable[Graph] = tuple(
         make_sample_graph(
-            range(start + n * num, start + (n + 1) * num),
+            range(start, start + num),
             base=base,
             bnode_subjects=True,
         )
@@ -156,12 +226,12 @@ def test_separate_blanknodes_in_distinct_graphs(
         result = rdf_store.select(sparql, ns)
         assert len(result) != num, (
             f"{rdf_store_type} :: "
-            f"issue/42 unexpected response length {len(result)=} not {num=} "
+            f"issue/42 unexpected response length {len(result)=} not {N*num=} "
             "this shows the various graphs inserted all got the same uri"
         )
         assert len(result) == N * num, (
             f"{rdf_store_type} :: "
-            f"issue/42 unexpected response length {len(result)=} not {num=} "
+            f"issue/42 unexpected response length {len(result)=} not {N*num=} "
             "this shows we can't even predict how many / which unique uri "
             "are used for bnodes during skolemnization to {rdf_store_type}"
         )
