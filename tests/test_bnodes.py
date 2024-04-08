@@ -80,7 +80,7 @@ def test_file_with_blanknodes_multiple_graphs(rdf_stores: Iterable[RDFStore]):
         for g in graphs:
             rdf_store.insert(g, ns)
         result = rdf_store.select(sparql, ns)
-        assert len(result) == N*num_things_in_file, (
+        assert len(result) == N * num_things_in_file, (
             f"{rdf_store_type} :: "
             f"issue/42 unexpected response length {len(result)=} "
             f"not {N*num_things_in_file=}"
@@ -92,14 +92,19 @@ def test_file_with_blanknodes_multiple_graphs(rdf_stores: Iterable[RDFStore]):
 
 
 @pytest.mark.usefixtures("rdf_stores")
-def test_realfile_with_blanknodes_multiple_graphs(rdf_stores: Iterable[RDFStore]):
+def test_realfile_with_blanknodes_multiple_graphs(
+    rdf_stores: Iterable[RDFStore],
+):
     """specific test for issue #42
     making sure distinct blanknodes are indeed considered separate after ingest
     even if loaded from different identical files
     """
     N: int = 3  # creating 3 distinct identical graphs
     graphs: Iterable[Graph] = tuple(
-        loadfilegraph(TEST_INPUT_FOLDER / "marineinfo-publication-365467.ttl", format="turtle")
+        loadfilegraph(
+            TEST_INPUT_FOLDER / "marineinfo-publication-365467.ttl",
+            format="turtle",
+        )
         for i in range(N)
     )
     num_persons_in_file = 23
@@ -115,7 +120,7 @@ def test_realfile_with_blanknodes_multiple_graphs(rdf_stores: Iterable[RDFStore]
         for g in graphs:
             rdf_store.insert(g, ns)
         result = rdf_store.select(sparql, ns)
-        assert len(result) == N*num_persons_in_file, (
+        assert len(result) == N * num_persons_in_file, (
             f"{rdf_store_type} :: "
             f"issue/42 unexpected response length {len(result)=} "
             f"not {N*num_persons_in_file=}"
