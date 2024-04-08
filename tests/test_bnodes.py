@@ -117,7 +117,9 @@ def test_separate_blanknodes(rdf_stores: Iterable[RDFStore]):
 
 
 @pytest.mark.usefixtures("rdf_stores")
-def test_separate_blanknodes_in_distinct_graphs(rdf_stores: Iterable[RDFStore]):
+def test_separate_blanknodes_in_distinct_graphs(
+    rdf_stores: Iterable[RDFStore],
+):
     """specific test for issue #42
     making sure distinct blanknodes are indeed considered separate after ingest
     even if that ingest involves multiple graphs
@@ -129,8 +131,9 @@ def test_separate_blanknodes_in_distinct_graphs(rdf_stores: Iterable[RDFStore]):
     start: int = 420
     graphs: Iterable[Graph] = tuple(
         make_sample_graph(
-            range(start + n * num, start + (n+1) * num),
-            base=base, bnode_subjects=True
+            range(start + n * num, start + (n + 1) * num),
+            base=base,
+            bnode_subjects=True,
         )
         for n in range(N)
     )
