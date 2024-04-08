@@ -144,7 +144,7 @@ def test_separate_blanknodes_in_distinct_graphs(
         rdf_store_type = type(rdf_store).__name__
         log.debug(
             f"{rdf_store_type} :: testing for issue/42 "
-            f"inserting {len(graphs)} graphs of {num} triples with bnode-subjects "
+            f"inserting {len(graphs)} graphs of {num} bnode-subjects "
             f"into named_graph {ns}"
         )
         for i, g in enumerate(graphs):
