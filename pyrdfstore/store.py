@@ -23,18 +23,22 @@ def timestamp():
 
 
 class RDFStore(ABC):
-    """This interface describes the basic contract for having read, write operations versus a
-    managed set of named-graphs so that the lastmod timestamp on each of these is being tracked properly
-    so the 'age' of these can be compared easily to decide on required or oportune updates
+    """This interface describes the basic contract for having read,
+    write operations versus a managed set of named-graphs so that
+    the lastmod timestamp on each of these is being tracked properly
+    so the 'age' of these can be compared easily to decide on required
+    or oportune updates
     """
 
     @abstractmethod
     def select(self, sparql: str, named_graph: Optional[str]) -> Result:
-        """executes a sparql select query, possibly narrowed to the named_grap it represents
+        """executes a sparql select query, possibly narrowed to
+        the named_grap it represents
 
         :param sparql: the query-statement to execute
         :type sparql: str
-        :param named_graph: the uri describing the named_graph into which the select should be narrowed
+        :param named_graph: the uri describing the named_graph into which
+          the select should be narrowed
         :type named_graph: str
         :return: the result of the query
         :rtype: Result
@@ -43,25 +47,32 @@ class RDFStore(ABC):
 
     @abstractmethod
     def insert(self, graph: Graph, named_graph: Optional[str] = None) -> None:
-        """inserts the triples from the passed graph into the suggested named_graph
+        """inserts the triples from the passed graph into
+        the suggested named_graph
 
         :param graph: the graph of triples to insert
         :type graph: Graph
-        :param named_graph: the uri describing the named_graph into which the graph should be inserted
+        :param named_graph: the uri describing the named_graph into which
+          the graph should be inserted
         :type named_graph: str
         :rtype: None
         """
         pass
 
     def verify_max_age(self, named_graph: str, age_minutes: int) -> bool:
-        """verifies that a certain graph is not aged older than a certain amount of minutes
-        (as this just uses self.lastmod_ts() implementations should just get that right and simply inherit this)
+        """verifies that a certain graph is not aged older than a certain
+        amount of minutes
+        Note: as this just uses self.lastmod_ts() from implementations
+          those should just get that method right and can simply inherit
+          this one.
 
-        :param named_graph: the uri describing the named_graph to check the age of
+        :param named_graph: the uri describing the named_graph to check
+          the age of
         :type named_graph: str
         :param age_minutes: the max acceptable age in minutes
         :type age_minutes: int
-        :return: True if the graph has aged less than the passed number of minutes in the argument, else False
+        :return: True if the graph has aged less than the passed number of
+          minutes in the argument, else False
         :rtype: bool
         """
         named_graph_lastmod = self.lastmod_ts(named_graph)
@@ -76,11 +87,13 @@ class RDFStore(ABC):
     @abstractmethod
     def lastmod_ts(self, named_graph: str) -> datetime:
         """returns the update timestamp of the specified graph
-        Note: the implementations should make the stored and returned datetime object
+        Note: the implementations should make the stored and returned
+        datetime object are
           1. timezone - aware and
           2. placed in the UTC_tz
 
-        :param named_graph: the uri describing the named_graph to get the lastmod timestamp of
+        :param named_graph: the uri describing the named_graph to get
+          the lastmod timestamp of
         :type named_graph: str
         :return: the time of last modification (insert or drop)
         :rtype: datetime
@@ -92,7 +105,8 @@ class RDFStore(ABC):
     def named_graphs(self) -> Iterable[str]:
         """returns the known & managed named-graphs in the store
 
-        :return: the list of named-graphs, known and managed (possibly already deleted) in this store
+        :return: the list of named-graphs, known and managed
+          (possibly already deleted) in this store
         :rtype: List[str]
         """
         pass
@@ -115,7 +129,8 @@ class RDFStore(ABC):
     def forget_graph(self, named_graph: str) -> None:
         """forgets about the names_graph being under control
         This functions independent of the drop_graph method.
-        So any client of this service is expected to decide when (or not) to combine both
+        So any client of this service is expected to decide when (or not)
+        to combine both
 
         Note: dropping any unknown graph should just work without complaints
         Note: forgetting a graph removes any trail of its 'update'
@@ -130,12 +145,13 @@ class RDFStore(ABC):
 
 
 class URIRDFStore(RDFStore):
-    """This class is used to connect to a SPARQL endpoint and execute SPARQL queries
+    """This class is used to connect to a SPARQL endpoint and execute
+    SPARQL queries
 
     :param read_uri: The URI of the SPARQL endpoint to read from
     :type read_uri: str
     :param write_uri: The URI of the SPARQL endpoint to write to.
-                        If not provided, the store can only be read from, not updated.
+      If not provided, the store can only be read from, not updated.
     :type write_uri: Optional[str]
     """
 
@@ -182,11 +198,14 @@ class URIRDFStore(RDFStore):
     def _update_registry_lastmod(
         self, named_graph: str, lastmod: datetime = None
     ) -> Iterable[str]:
-        """Consults and changes the admin-graph of lastmod entries per named_graph.
+        """Consults and changes the admin-graph of lastmod entries
+        per named_graph.
 
-        :param named_graph: the named_graph to be handled, required, can be None to return the list of all available names
+        :param named_graph: the named_graph to be handled, required,
+          can be None to return the list of all available names
         :type named_graph: str (or None)
-        :param lastmod: the new lastmod timestamp for this named_graph, if None (or not provided) this will 'forget' the named_graph
+        :param lastmod: the new lastmod timestamp for this named_graph,
+          if None (or not provided) this will 'forget' the named_graph
         :type lastmod: datetime
         :return: the list of named_graphs in management
         :rtype: Iterable[str]
@@ -232,7 +251,8 @@ class URIRDFStore(RDFStore):
         lastmod: Literal = adm_graph.value(
             URIRef(named_graph), SCHEMA_DATEMODIFIED
         )
-        # above is None if nothing found, else convert the literal to actual .value (datetime)
+        # above is None if nothing found,
+        # else convert the literal to actual .value (datetime)
         return lastmod.value if lastmod is not None else None
 
     def drop_graph(self, named_graph: str) -> None:
@@ -251,7 +271,8 @@ class URIRDFStore(RDFStore):
 
 
 class MemoryRDFStore(RDFStore):
-    # check if rdflib.Dataset could not help out here, such would allign more logically and elegantly?
+    # check if rdflib.Dataset could not help out here,
+    # such would allign more logically and elegantly?
     def __init__(self):
         self._all: Graph = Graph(**g_cfg_kwargs)
         self._named_graphs = dict()

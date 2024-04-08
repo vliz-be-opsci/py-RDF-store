@@ -7,7 +7,8 @@ log = logging.getLogger(__name__)
 
 def create_rdf_store(*store_info) -> RDFStore:
     """Creates an rdf_store based on the passed non-None arguments.
-    0 of those arguments, will yield a MemoryRDFStore, 1-2 will be passed as read_uri resp write_uri to URIRDFStore
+    0 of those arguments, will yield a MemoryRDFStore,
+    1-2 will be passed as read_uri resp write_uri to URIRDFStore
     Anything beyond is unacceptable
     """
     store_info = [

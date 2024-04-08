@@ -1,20 +1,20 @@
 #! /usr/bin/env python
-from pathlib import Path
 from time import sleep
 from typing import Iterable, List, Tuple
 from uuid import uuid4
 
 import pytest
-from conftest import TEST_INPUT_FOLDER, loadfilegraph, make_sample_graph
-from rdflib import BNode, Graph, Literal, Namespace, URIRef
+from conftest import (
+    DCT_ABSTRACT,
+    SELECT_ALL_SPO,
+    TEST_INPUT_FOLDER,
+    assert_file_ingest,
+)
+from rdflib import Graph
 from rdflib.query import Result
 from util4tests import log, run_single_test
 
 from pyrdfstore.store import RDFStore
-
-DCT: Namespace = Namespace("http://purl.org/dc/terms/#")
-DCT_ABSTRACT: URIRef = DCT.abstract
-SELECT_ALL_SPO = "SELECT ?s ?p ?o WHERE { ?s ?p ?o . }"
 
 
 @pytest.mark.usefixtures("rdf_stores", "example_graphs")
@@ -69,7 +69,10 @@ def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
-            ), f"{rdf_store_type} :: expected triple for index { i } not found in search result."
+            ), (
+                f"{rdf_store_type} :: expected triple for index { i } "
+                "not found in search result."
+            )
 
 
 @pytest.mark.usefixtures("rdf_stores")
@@ -98,61 +101,6 @@ def test_unkown_drop(rdf_stores: Iterable[RDFStore]):
         assert ns not in rdf_store.named_graphs
 
 
-def format_from_extension(fpath: Path):
-    sfx = fpath.suffix
-    sfmap = {".ttl": "turtle", ".jsonld": "json-ld"}
-    return sfmap[sfx]
-
-
-def assert_file_ingest(
-    rdf_store: RDFStore,
-    fpath: Path,
-    sparql_test: str = None,
-    expected_count: int = None,
-):
-    assert fpath.exists(), (
-        "can not test insertion of " f"non-existent file {fpath=}"
-    )
-
-    ns = f"urn:test:{fpath.stem}"
-
-    rdf_store_type = type(rdf_store).__name__
-    log.debug(f"{rdf_store_type} :: testing ingest of {fpath=} into {ns=}")
-
-    # clear it to avoid effects from previous tests
-    log.debug(f"{rdf_store_type} :: dropping {ns=} to set clear base")
-    rdf_store.drop_graph(ns)
-
-    # read file into graph
-    fg = Graph().parse(str(fpath), format=format_from_extension(fpath))
-    num_triples = len(fg)
-    log.debug(f"{rdf_store_type} :: inserting {num_triples=} into {ns=}")
-    rdf_store.insert(fg, ns)
-
-    # then verify
-    if sparql_test is None:
-        # default test is to just retrieve all triples we inserted
-        sparql_test = SELECT_ALL_SPO
-        expected_count = num_triples
-
-    result = rdf_store.select(sparql_test, ns)
-    assert len(result) == expected_count, (
-        f"{rdf_store_type} :: "
-        f"test after insert of {fpath=} into {ns=} did not yield {expected_count=}"
-    )
-
-    return fg, ns, result
-
-
-@pytest.mark.usefixtures("rdf_stores")
-def test_insert_simple_with_bnodes(rdf_stores: Iterable[RDFStore]):
-    for rdf_store in rdf_stores:
-        # check the ingest of a simple example using blank nodes
-        assert_file_ingest(
-            rdf_store, TEST_INPUT_FOLDER / "simple_with_bnodes.ttl"
-        )
-
-
 @pytest.mark.usefixtures("rdf_stores")
 def test_insert_large_graph(rdf_stores: Iterable[RDFStore]):
     for rdf_store in rdf_stores:
@@ -167,7 +115,8 @@ def test_insert_large_statement(rdf_stores: Iterable[RDFStore]):
     for rdf_store in rdf_stores:
         rdf_store_type = type(rdf_store).__name__
 
-        # check the ingest of a turtle file with one really large value in the dct:abstract
+        # check the ingest of a turtle file with
+        # one really large value in the dct:abstract
         g, ns, result = assert_file_ingest(
             rdf_store,
             TEST_INPUT_FOLDER / "marineinfo-publication-246614.ttl",
@@ -232,7 +181,10 @@ def test_insert_named(
                         for part in ["subject", "predicate", "object"]
                     )
                     in results
-                ), f"{rdf_store_type} :: expected triple for index { i } not found in result"
+                ), (
+                    f"{rdf_store_type} :: expected triple for index { i } "
+                    "not found in result"
+                )
 
         for plan in plans:
             assert rdf_store.verify_max_age(ns, 1), (
@@ -250,10 +202,12 @@ def test_insert_named(
         for plan in plans:
             assert not rdf_store.verify_max_age(ns, 1), (
                 f"{rdf_store_type} :: "
-                "after a minute of nothing, those should be older then a minute"
+                "after a minute of nothing, "
+                "all those graphs should be older then a minute"
             )
 
-        # now drop the second graph, and check for the (should be none!) effect on the first
+        # now drop the second graph,
+        # and check for the (should be none!) effect on the first
         ns1, nums1 = plans[0]["ns"], plans[0]["nums"]
         ns2 = plans[1]["ns"]
         rdf_store.drop_graph(ns2)
@@ -265,9 +219,9 @@ def test_insert_named(
         # there should be nothing left in ns2
         try:
             result = rdf_store.select(sparql, ns2)
-        except (
-            Exception
-        ):  # accept that this could also throw an exception since the graph was dropped!
+        except Exception:
+            # note this could also throw an exception in case
+            # the graph was dropped!
             result = []
         assert len(result) == 0, (
             f"{rdf_store_type} :: "
@@ -289,7 +243,10 @@ def test_insert_named(
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
-            ), f"{rdf_store_type} :: expected triple for index { i } not found in result of {ns1=}"
+            ), (
+                f"{rdf_store_type} :: expected triple for index { i } "
+                f"not found in result of {ns1=}"
+            )
 
         # all stuff should still be there in the overall search-graph
         result: List[Tuple[str]] = [
@@ -306,7 +263,10 @@ def test_insert_named(
                     for part in ["subject", "predicate", "object"]
                 )
                 in results
-            ), f"{rdf_store_type} :: expected triple for index { i } not found in result of overall search"
+            ), (
+                f"{rdf_store_type} :: expected triple for index { i } "
+                "not found in result of overall search"
+            )
 
 
 @pytest.mark.usefixtures("rdf_stores", "sample_file_graph")
@@ -315,7 +275,9 @@ def test_select_property_trajectory(
 ):
     # SPARQL to select trajectory of a property
     sparql = """
-    SELECT ?s ?o WHERE {?s <http://purl.org/dc/terms/abstract>/<http://purl.org/dc/terms/else> ?o .}
+    SELECT ?s ?o WHERE {
+    ?s <http://purl.org/dc/terms/abstract>/<http://purl.org/dc/terms/else> ?o .
+    }
     """
 
     for rdf_store in rdf_stores:
@@ -324,131 +286,6 @@ def test_select_property_trajectory(
         rdf_store.select(sparql)
         # we should just get here without an error
         assert True
-
-
-@pytest.mark.usefixtures("rdf_stores")
-def test_insert_with_skolemize(rdf_stores: Iterable[RDFStore]):
-    # Create a test graph with BNODE
-    graph = Graph()
-    graph.add((BNode(), DCT_ABSTRACT, Literal("Test abstract of blank node")))
-
-    sparql = f"SELECT ?abstract WHERE {{ [] <{DCT_ABSTRACT}> ?abstract }}"
-
-    for rdf_store in rdf_stores:
-        rdf_store_type = type(rdf_store).__name__
-
-        result_before = rdf_store.select(sparql)
-        log.debug(f"{result_before=}")
-        log.debug(f"{len(result_before)=}")
-
-        # Call the insert method
-        rdf_store.insert(graph)
-
-        result = rdf_store.select(sparql)
-        log.debug(f"{rdf_store_type} :: {result=}")
-        log.debug(f"{rdf_store_type} :: {len(result)=}")
-        n = 0
-        for row in result:
-            log.debug(f"{rdf_store_type} :: {n=} : {row=}")
-            n += 1
-
-        assert len(result) == len(result_before) + 1, (
-            f"{rdf_store_type} :: " "we should have added one abstract !"
-        )
-
-
-@pytest.mark.usefixtures("rdf_stores")
-def test_sparql_with_regex_and_prefix(rdf_stores: Iterable[RDFStore]):
-    """specific test for issue #29
-    making sure sparql statements with prefix and regex statements are working
-    """
-    lbl: str = "issue-29"
-    base: str = f"https://example.org/base-{lbl}/"
-    num: int = 5
-    start: int = 100
-    g: Graph = make_sample_graph(range(start, start + num), base)
-    ns: str = f"urn:test:uuid:{uuid4()}"
-    sparql: str = (
-        f"prefix schema: <{base}>"
-        "select *"
-        "where { "
-        "    [] ?p ?o . "
-        f"    filter(regex(str(?p), '{lbl}'))"
-        "}"
-    )
-
-    for rdf_store in rdf_stores:
-        rdf_store_type = type(rdf_store).__name__
-        rdf_store.insert(g, ns)
-        result = rdf_store.select(sparql, ns)
-        assert isinstance(result, Result), (
-            f"{rdf_store_type} :: "
-            "issue/29 cannot execute selects with prefix and regex parts"
-        )
-        assert len(result) == num, (
-            f"{rdf_store_type} :: "
-            f"issue/29 unexpected response length {len(result)=} not {num=}"
-        )
-        log.debug(
-            f"{rdf_store_type} :: no issue/29 detected {sparql=} and got {len(result)=}"
-        )
-
-
-@pytest.mark.usefixtures("rdf_stores")
-def test_separate_blanknodes(rdf_stores: Iterable[RDFStore]):
-    """specific test for issue #32
-    making sure distinct blanknodes are indeed considered separate after ingest
-    """
-    lbl: str = "issue-32"
-    base: str = f"https://example.org/base-{lbl}/"
-    num: int = 5
-    start: int = 200
-    g: Graph = make_sample_graph(
-        range(start, start + num), base=base, bnode_subjects=True
-    )
-    ns: str = f"urn:test:uuid:{uuid4()}"
-    sparql: str = "select distinct ?s where { ?s ?p ?o .}"
-
-    for rdf_store in rdf_stores:
-        rdf_store_type = type(rdf_store).__name__
-        rdf_store.insert(g, ns)
-        result = rdf_store.select(sparql, ns)
-        assert len(result) == num, (
-            f"{rdf_store_type} :: "
-            f"issue/32 unexpected response length {len(result)=} not {num=}"
-        )
-        log.debug(
-            f"{rdf_store_type} :: no issue/32 detected {sparql=} and got {len(result)=}"
-        )
-
-
-@pytest.mark.usefixtures("rdf_stores")
-def test_file_with_blanknodes(rdf_stores: Iterable[RDFStore]):
-    """specific test for issue #32
-    making sure distinct blanknodes are indeed considered separate after ingest
-    """
-    g: Graph = loadfilegraph(
-        TEST_INPUT_FOLDER / "issue-32.ttl", format="turtle"
-    )
-    num_things_in_file = 4
-    ns: str = f"urn:test:uuid:{uuid4()}"
-    sparql: str = (
-        "prefix schema: <https://schema.org/>"
-        "select distinct ?s "
-        "where { ?s a schema:Thing .}"
-    )
-
-    for rdf_store in rdf_stores:
-        rdf_store_type = type(rdf_store).__name__
-        rdf_store.insert(g, ns)
-        result = rdf_store.select(sparql, ns)
-        assert len(result) == num_things_in_file, (
-            f"{rdf_store_type} :: "
-            f"issue/32 unexpected response length {len(result)=} not {num_things_in_file=}"
-        )
-        log.debug(
-            f"{rdf_store_type} :: no issue/32 detected {sparql=} and got {len(result)=}"
-        )
 
 
 if __name__ == "__main__":
