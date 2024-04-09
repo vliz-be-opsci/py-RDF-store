@@ -1,0 +1,17 @@
+[
+    {
+        "@id": "_:b0",
+        "@type": "https://schema.org/Person", 
+        "https://schema.org/givenName": "Me"
+    },
+    {
+        "@id": "_:b1",
+        "@type": "https://schema.org/Person", 
+        "https://schema.org/givenName": "You"
+    },
+    {
+        "@id": "_:x9",
+        "@type": "https://schema.org/Person", 
+        "https://schema.org/givenName": "Them"
+    }
+] 

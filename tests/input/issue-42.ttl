@@ -1,0 +1,14 @@
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+_:b1
+  a schema:Person;
+  schema:givenName "Me"^^xsd:string .
+
+_:b2
+  a schema:Person ;
+  schema:givenName "You"^^xsd:string .
+
+_:x9
+  a schema:Person ;
+  schema:givenName "Them"^^xsd:string .

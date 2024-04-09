@@ -22,6 +22,16 @@ def timestamp():
     return datetime.now(UTC_tz)
 
 
+def reparse(g: Graph, format="nt"):
+    """This is a dirty hack workaround for issue https://github.com/RDFLib/rdflib/issues/2760
+    It reproduces the graph by serializing and parsing it again
+    Via an intermediate format (not jsonld!) that is known to work
+    :param g: the graph to reparse
+    :param format: the intermediate format to use
+    """
+    return Graph().parse(data=g.serialize(format=format), format=format)
+
+
 class RDFStore(ABC):
     """This interface describes the basic contract for having read,
     write operations versus a managed set of named-graphs so that
@@ -185,6 +195,7 @@ class URIRDFStore(RDFStore):
         return result
 
     def insert(self, graph: Graph, named_graph: Optional[str] = NIL_NS):
+        graph = reparse(graph)
         assert (
             self.allows_update
         ), "data can not be inserted into a store if no write_uri is provided"
@@ -287,6 +298,7 @@ class MemoryRDFStore(RDFStore):
         return target.query(sparql)
 
     def insert(self, graph: Graph, named_graph: Optional[str] = None):
+        graph = reparse(graph)
         named_graph_graph = None
         if named_graph is not None:
             if named_graph not in self._named_graphs:
