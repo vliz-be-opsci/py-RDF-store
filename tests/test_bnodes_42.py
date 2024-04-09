@@ -1,23 +1,16 @@
 #! /usr/bin/env python
-from typing import Iterable
 from pathlib import Path
-from requests import get
+from typing import Iterable
 from uuid import uuid4
 
 import pytest
-from conftest import (
-    DCT_ABSTRACT,
-    TEST_INPUT_FOLDER,
-    assert_file_ingest,
-    loadfilegraph,
-    make_sample_graph,
-)
-from rdflib import BNode, Graph, Literal
+from conftest import TEST_INPUT_FOLDER, loadfilegraph
+from rdflib import Graph
 from rdflib.query import Result
+from requests import get
 from util4tests import log, run_single_test
 
 from pyrdfstore.store import RDFStore
-
 
 TEST_BASE: str = "https://marineinfo.org/id/publication/365467"
 
@@ -32,13 +25,13 @@ def web_content(url: str):
     return resp.text
 
 
-def tops(text: str, *, num: int = 3, start: str = '_', sep: str = '\n'):
-    """ get top (num) lines in sorted text that start as indicated
+def tops(text: str, *, num: int = 3, start: str = "_", sep: str = "\n"):
+    """get top (num) lines in sorted text that start as indicated
     :param text: text to filter, sort and top
     :param num: (int) number of lines to keep
     :param start: (char) matching start char of lines to keep in filter
       - default '_'
-    :param sep: (char) used for marking line boundaries in text, 
+    :param sep: (char) used for marking line boundaries in text,
       used in split and join
       - default '\n'
     """
@@ -108,7 +101,10 @@ def test_storing_content_with_bnodes(rdf_stores: Iterable[RDFStore]):
             log.debug(f". for input {label=}")
             for pubid in (None, base):
                 log.debug(f".. for base {pubid=}")
-                log.debug(f"... so combined {rdf_store_type}.insert(Graph.parse(data={label}, {pubid=}))")
+                log.debug(
+                    f"... so combined {rdf_store_type}."
+                    f"insert(Graph.parse(data={label}, {pubid=}))"
+                )
                 g = Graph()
                 g.parse(data=content, format="turtle", publicID=pubid)
                 rdf_store.insert(g, ng)

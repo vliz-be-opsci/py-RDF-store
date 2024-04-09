@@ -23,7 +23,8 @@ def timestamp():
 
 
 def reparse(g: Graph, format="nt"):
-    """This is a dirty hack workaround for issue https://github.com/RDFLib/rdflib/issues/2760
+    """This is a hack workaround for issue
+    https://github.com/RDFLib/rdflib/issues/2760
     It reproduces the graph by serializing and parsing it again
     Via an intermediate format (not jsonld!) that is known to work
     :param g: the graph to reparse
