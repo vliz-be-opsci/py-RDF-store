@@ -170,17 +170,21 @@ class URIRDFStore(RDFStore):
         self.allows_update = False
         self._store_constr = None  # we will delay creating independent stores
         if write_uri is None:
+
             def store_constr_ro():
                 return SPARQLStore(query_endpoint=read_uri)
+
             self._store_constr = store_constr_ro
         else:
-            def store_constr_rw(): 
+
+            def store_constr_rw():
                 return SPARQLUpdateStore(
                     query_endpoint=read_uri,
                     update_endpoint=write_uri,
                     method="POST",
                     autocommit=True,
                 )
+
             self.allows_update = True
             self._store_constr = store_constr_rw
 
