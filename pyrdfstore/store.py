@@ -167,18 +167,30 @@ class URIRDFStore(RDFStore):
     """
 
     def __init__(self, read_uri: str, write_uri: Optional[str] = None):
-        self.sparql_store = None
         self.allows_update = False
+        self._store_constr = None  # we will delay creating independent stores
         if write_uri is None:
-            self.sparql_store = SPARQLStore(query_endpoint=read_uri)
+
+            def store_constr_ro():
+                return SPARQLStore(query_endpoint=read_uri)
+
+            self._store_constr = store_constr_ro
         else:
-            self.sparql_store = SPARQLUpdateStore(
-                query_endpoint=read_uri,
-                update_endpoint=write_uri,
-                method="POST",
-                autocommit=True,
-            )
+
+            def store_constr_rw():
+                return SPARQLUpdateStore(
+                    query_endpoint=read_uri,
+                    update_endpoint=write_uri,
+                    method="POST",
+                    autocommit=True,
+                )
+
             self.allows_update = True
+            self._store_constr = store_constr_rw
+
+    @property
+    def sparql_store(self):  # dynamically (delayed) build of the instance
+        return self._store_constr()
 
     def select(self, sparql: str, named_graph: Optional[str] = None) -> Result:
         log.debug(f"exec select {sparql=} into {named_graph=}")
