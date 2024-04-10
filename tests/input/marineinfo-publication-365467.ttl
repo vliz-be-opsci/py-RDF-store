@@ -1,0 +1,204 @@
+@prefix bibo: <http://purl.org/ontology/bibo/#> .
+@prefix cld: <http://purl.org/cld/terms/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dct: <http://purl.org/dc/terms/#> .
+@prefix dcmitype: <http://purl.org/dc/dcmitype/#> .
+@prefix dbo: <http://dbpedia.org/ontology/#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix freq: <http://purl.org/cld/freq/> .
+@prefix locn: <http://www.w3.org/ns/locn#> .
+@prefix org: <http://www.w3.org/ns/org#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix time: <http://www.w3.org/2006/time#> .
+@prefix unit: <http://qudt.org/vocab/unit/#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix mi: <http://www.marineinfo.org/ns/ontology#> .
+@prefix mibc: <http://marineinfo.org/ns/library/bibcodes#> .
+@prefix mibt: <http://marineinfo.org/ns/library/bibtypes#> . 
+@prefix mir: <http://marineinfo.org/ns/person/roles#> .
+@prefix miprog: <http://marineinfo.org/ns/progress#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ssn: <http://www.w3.org/ns/ssn/> . 
+@prefix sosa: <http://www.w3.org/ns/sosa/> . 
+
+@base <https://marineinfo.org/id/publication/365467> .
+
+
+<>
+        a dct:BibliographicResource, schema:CreativeWork, dcat:Resource ; 
+            dct:type 'Reports'^^xsd:string ;
+                        mi:hasBibType 'Project report'^^xsd:string ;
+                    mi:hasBibLvlCode ''^^xsd:string ;
+                        dct:created  '2023-07-04'^^xsd:date ;
+    dct:modified  '2023-07-04'^^xsd:date ;
+            dct:title 'FAIR-EASE D5.1: Report on key requirement from use cases and pilots'^^xsd:string ;
+            dct:abstract 'The overall objective of the EOSC Horizon Europe FAIR-EASE project is to develop and operate distributed and integrated services for observation and modelling of the earth system, environment and biodiversity implemented in close cooperation with user-communities and research infrastructures in their very design and sustainable availability and evolution.The FAIR-EASE WP5 (Work Package) is in charge of coordinating the activities tackling three different use cases (UCs): 1) the Earth and Environment dynamics; 2) The Environmental Biogeochemical Asset; 3) The Biodiversity Observations. As documented in the FAIR-EASE work plan, all the use cases represent “Real Life-Science” challenges. During the progress of the project, specific Pilots will be considered per UC, each of them addressing specific objectives.This deliverable reports on the assessment of the key requirements and the mapping of main resources to be considered in the project to fulfill the aims and scope of the Pilots included in each use case.'@en ;
+                dct:bibliographicCitation '<b>Chiusano, M.L.; Schlitzer, R.; Simoncelli, S.; Troupin, C.; Langella, G.; Terrible, F.; Pascal, N.; Boichu, M.; Grandin, R.; Racapé, V.; Schmechtig, C.; Sauzède, R.; Sizun, A.; Giorgetti, A.; Reyes, C.; Cox, C.J.; Exter, K.; Portier, M.; Ninidakis, S.; Santi, I.; Bosso, L.; Ambrosino, L.; Miralto, M.</b> (2023). FAIR-EASE D5.1: Report on key requirement from use cases and pilots. UNINA: Naples. 91 pp.'^^xsd:string ;
+                                            dbo:isPeerReviewed 'false'^^xsd:boolean ;
+                schema:isAccessibleForFree 'true'^^xsd:boolean ;
+        
+                
+                            schema:author [
+            a schema:Person ;
+                            schema:givenName 'Maria Luisa'^^xsd:string ;
+                                        schema:familyName 'Chiusano'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                                        schema:familyName 'Schlitzer'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Simona'^^xsd:string ;
+                                        schema:familyName 'Simoncelli'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Charles'^^xsd:string ;
+                                        schema:familyName 'Troupin'^^xsd:string;
+                                        schema:identifier </id/person/19092> ;
+                                        schema:affiliation </id/institute/3199> ;
+                        ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Giuliano '^^xsd:string ;
+                                        schema:familyName 'Langella'^^xsd:string;
+                                        schema:identifier </id/person/43755> ;
+                                    ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Fabio'^^xsd:string ;
+                                        schema:familyName 'Terrible'^^xsd:string;
+                                        schema:identifier </id/person/43756> ;
+                                    ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Nicolas'^^xsd:string ;
+                                        schema:familyName 'Pascal'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Marie'^^xsd:string ;
+                                        schema:familyName 'Boichu'^^xsd:string;
+                                        schema:identifier </id/person/43757> ;
+                                    ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Raphaël '^^xsd:string ;
+                                        schema:familyName 'Grandin'^^xsd:string;
+                                        schema:identifier </id/person/43758> ;
+                                    ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Virgine'^^xsd:string ;
+                                        schema:familyName 'Racapé'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Catherine'^^xsd:string ;
+                                        schema:familyName 'Schmechtig'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Raphaëlle'^^xsd:string ;
+                                        schema:familyName 'Sauzède'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Alban'^^xsd:string ;
+                                        schema:familyName 'Sizun'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Alessandra'^^xsd:string ;
+                                        schema:familyName 'Giorgetti'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Catalina'^^xsd:string ;
+                                        schema:familyName 'Reyes'^^xsd:string;
+                                        schema:identifier </id/person/43759> ;
+                                    ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Cymon'^^xsd:string ;
+                                        schema:familyName 'Cox'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Katrina'^^xsd:string ;
+                                        schema:familyName 'Exter'^^xsd:string;
+                                        schema:identifier </id/person/35548> ;
+                                        schema:affiliation </id/institute/36> ;
+                        ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Marc'^^xsd:string ;
+                                        schema:familyName 'Portier'^^xsd:string;
+                                        schema:identifier </id/person/38476> ;
+                                        schema:affiliation </id/institute/36> ;
+                        ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Stelios'^^xsd:string ;
+                                        schema:familyName 'Ninidakis'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Ioulia'^^xsd:string ;
+                                        schema:familyName 'Santi'^^xsd:string;
+                                        schema:identifier </id/person/43753> ;
+                                    ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Luciano'^^xsd:string ;
+                                        schema:familyName 'Bosso'^^xsd:string;
+                                        schema:identifier </id/person/43760> ;
+                                    ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Luca'^^xsd:string ;
+                                        schema:familyName 'Ambrosino'^^xsd:string;
+                                                ] ;
+                    schema:author [
+            a schema:Person ;
+                            schema:givenName 'Marco'^^xsd:string ;
+                                        schema:familyName 'Miralto'^^xsd:string;
+                                                ] ;
+            
+        
+                
+        
+        
+        
+        
+        
+        
+        
+                        dct:isPartOf </id/collection/992> ;
+                                
+        
+        
+        
+                schema:datePublished '2023'^^xsd:date ;
+                schema:pagination '91'^^xsd:integer ;
+                    
+                    bibo:pages '91'^^xsd:string ;
+            
+    
+
+    
+    
+                    .
+
+     </id/collection/992>
+    a dcmitype:Collection, schema:Collection ;
+    dct:title 'FRIS (VLIZ) - Flanders Research Information Space'^^xsd:string ;
+    dct:identifier '992'^^xsd:string ;
+.
+        

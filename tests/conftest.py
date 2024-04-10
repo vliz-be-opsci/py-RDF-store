@@ -3,15 +3,65 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 import pytest
-from rdflib import BNode, Graph, URIRef
+from rdflib import BNode, Graph, Namespace, URIRef
 from util4tests import enable_test_logging, log
 
 from pyrdfstore import RDFStore, create_rdf_store
 
 TEST_INPUT_FOLDER = Path(__file__).parent / "./input"
+DCT: Namespace = Namespace("http://purl.org/dc/terms/#")
+DCT_ABSTRACT: URIRef = DCT.abstract
+SELECT_ALL_SPO = "SELECT ?s ?p ?o WHERE { ?s ?p ?o . }"
 
 
 enable_test_logging()  # note that this includes loading .env into os.getenv
+
+
+def format_from_extension(fpath: Path):
+    sfx = fpath.suffix
+    sfmap = {".ttl": "turtle", ".jsonld": "json-ld"}
+    return sfmap[sfx]
+
+
+def assert_file_ingest(
+    rdf_store: RDFStore,
+    fpath: Path,
+    sparql_test: str = None,
+    expected_count: int = None,
+):
+    assert fpath.exists(), (
+        "can not test insertion of " f"non-existent file {fpath=}"
+    )
+
+    ns = f"urn:test:{fpath.stem}"
+
+    rdf_store_type = type(rdf_store).__name__
+    log.debug(f"{rdf_store_type} :: testing ingest of {fpath=} into {ns=}")
+
+    # clear it to avoid effects from previous tests
+    log.debug(f"{rdf_store_type} :: dropping {ns=} to set clear base")
+    rdf_store.drop_graph(ns)
+
+    # read file into graph
+    fg = Graph().parse(str(fpath), format=format_from_extension(fpath))
+    num_triples = len(fg)
+    log.debug(f"{rdf_store_type} :: inserting {num_triples=} into {ns=}")
+    rdf_store.insert(fg, ns)
+
+    # then verify
+    if sparql_test is None:
+        # default test is to just retrieve all triples we inserted
+        sparql_test = SELECT_ALL_SPO
+        expected_count = num_triples
+
+    result = rdf_store.select(sparql_test, ns)
+    assert len(result) == expected_count, (
+        f"{rdf_store_type} :: "
+        f"test after insert of {fpath=} into {ns=} "
+        f"did not yield {expected_count=}"
+    )
+
+    return fg, ns, result
 
 
 @pytest.fixture(scope="session")
@@ -51,7 +101,8 @@ def _uri_rdf_store() -> RDFStore:
 @pytest.fixture()
 def rdf_stores(_mem_rdf_store, _uri_rdf_store) -> Iterable[RDFStore]:
     """trimmed list of available stores to be tested
-    result should contain at least memory_rdf_store, and (if available) also include uri_rdf_store
+    result should contain at least memory_rdf_store, and (if available)
+    also include uri_rdf_store
     """
     stores = tuple(
         store
@@ -81,14 +132,16 @@ def make_sample_graph(
     bnode_subjects: Optional[bool] = False,
 ) -> Graph:
     """makes a small graph for testing purposes
-    the graph is build up of triples that follow the pattern {base}{part}-{item}
+    the graph is build up of triples that follow the
+    pattern {base}{part}-{item}
     where:
      - base is optionally provided as argument
      - item is iterated from the required items argument
      - part is built in iterated over ("subject", "predicate", "object")
 
     :param items: list of 'items' to be inserted in the uri
-    :type items: Iterable, note that all members will simply be str()-ified into the uri building
+    :type items: Iterable, note that all members of it will simply be
+      str()-ified into the uri building
     :param base: (optional) baseuri to apply into the pattern
     :type base: str
     :param bnode_subjects: indicating that the subject
