@@ -10,7 +10,7 @@ from conftest import (
     TEST_INPUT_FOLDER,
     assert_file_ingest,
 )
-from rdflib import Graph
+from rdflib import Graph, URIRef, Literal
 from rdflib.query import Result
 from util4tests import log, run_single_test
 
@@ -28,6 +28,26 @@ def test_fixtures(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
         example_graphs is not None
     ), "fixture example_graphs should be available"
     assert len(example_graphs) == 10
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_uri_with_odd_chars(rdf_stores: Iterable[RDFStore]):
+    g: Graph = Graph()
+    doiref: str = (
+        "http://dx.doi.org/10.1656"
+        "/1092-6194(2004)11[261:CBIAHC]2.0.CO;2"
+    )
+    g.add(tuple((URIRef(doiref), DCT_ABSTRACT, Literal("something something"))))
+    ns: str = f"urn:test-uri-with-strange-chars:{uuid4()}"
+    for rdf_store in rdf_stores:
+        rdf_store_type: str = type(rdf_store).__name__
+        rdf_store.insert(g, ns)
+        log.debug(
+            f"{rdf_store_type} :: inserting triple with funny chars "
+            f"in URI to {ns=}"
+        )
+        res: Result = rdf_store.select(SELECT_ALL_SPO, ns)
+        assert len(res) == len(g)
 
 
 @pytest.mark.usefixtures("rdf_stores", "example_graphs")
