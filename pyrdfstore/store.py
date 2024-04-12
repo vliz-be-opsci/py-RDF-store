@@ -3,8 +3,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from typing import Optional
+from urllib.parse import quote
 
-from rdflib import Graph, Literal, Namespace, URIRef
+import validators
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
 
@@ -31,6 +33,50 @@ def reparse(g: Graph, format="nt"):
     :param format: the intermediate format to use
     """
     return Graph().parse(data=g.serialize(format=format), format=format)
+
+
+def check_valid_uri(uri: str) -> bool:
+    return bool(validators.url(uri))
+
+
+def clean_uri(uri: str, safe_characters: str) -> str:
+    base_safe = "~@#$&()*!+=:;,?/'"
+    if safe_characters is None:
+        log.debug(f"clean_uri {uri=} {safe_characters=} -> {uri}")
+        return quote(uri, base_safe)
+
+    # else
+    safe_characters += base_safe
+    # uniquefy the characters
+    safe_characters = "".join(set(safe_characters))
+    log.debug(
+        f"""clean_uri {uri=} {safe_characters=}
+        -> {quote(uri, safe=safe_characters)}"""
+    )
+    return quote(uri, safe=safe_characters)
+
+
+def clean_node(
+    ref: URIRef | BNode | Literal, safe_characters: str
+) -> URIRef | BNode | Literal:
+    if not isinstance(ref, URIRef):
+        return ref  # nothing to do if not URIRef
+    # else
+    uri = str(ref)
+    if check_valid_uri(uri):
+        return ref  # nothing to do if uri is valid
+    # else
+    return URIRef(clean_uri(uri, safe_characters))
+
+
+def clean_graph(bgraph: Graph, safe_characters: str) -> Graph:
+    cgraph: Graph = Graph()
+    for btriple in bgraph.triples(tuple((None, None, None))):  # all triples
+        ctriple = tuple(
+            (clean_node(node, safe_characters) for node in btriple)
+        )
+        cgraph.add(ctriple)
+    return cgraph
 
 
 class RDFStore(ABC):
@@ -207,11 +253,19 @@ class URIRDFStore(RDFStore):
         log.debug(f"Result from SPARQLStore :: {type(result)=} -> {result=}")
         return result
 
-    def insert(self, graph: Graph, named_graph: Optional[str] = NIL_NS):
+    def insert(
+        self,
+        graph: Graph,
+        named_graph: Optional[str] = NIL_NS,
+        safe_characters: Optional[str] = None,
+    ):
         graph = reparse(graph)
+        graph = clean_graph(graph, safe_characters)
+
         assert (
             self.allows_update
         ), "data can not be inserted into a store if no write_uri is provided"
+
         log.debug(f"insertion of {len(graph)=} into ({named_graph=})")
         store_graph = Graph(
             store=self.sparql_store, identifier=named_graph, **g_cfg_kwargs
@@ -310,8 +364,14 @@ class MemoryRDFStore(RDFStore):
         )
         return target.query(sparql)
 
-    def insert(self, graph: Graph, named_graph: Optional[str] = None):
+    def insert(
+        self,
+        graph: Graph,
+        named_graph: Optional[str] = None,
+        safe_characters: Optional[str] = None,
+    ):
         graph = reparse(graph)
+        graph = clean_graph(graph, safe_characters)
         named_graph_graph = None
         if named_graph is not None:
             if named_graph not in self._named_graphs:
@@ -353,8 +413,13 @@ class RDFStoreDecorator(RDFStore):
     def select(self, sparql: str, named_graph: Optional[str] = None) -> Result:
         return self._core.select(sparql, named_graph)
 
-    def insert(self, graph: Graph, named_graph: Optional[str] = None):
-        return self._core.insert(graph, named_graph)
+    def insert(
+        self,
+        graph: Graph,
+        named_graph: Optional[str] = None,
+        safe_characters: str = None,
+    ):
+        return self._core.insert(graph, named_graph, safe_characters)
 
     def lastmod_ts(self, named_graph: str) -> datetime:
         return self._core.lastmod_ts(named_graph)

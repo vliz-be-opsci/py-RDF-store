@@ -189,7 +189,6 @@ def test_insert_named(
     example_graphs: List[Graph],
     quicktest: bool,
 ):
-
     # this test plans to create 2 named_graphs,
     # so they contain some overlapped ranges from the example_graphs fixture
     plans = [
