@@ -2,13 +2,14 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Callable, Optional
 
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
 
 from .clean import reparse
+from .mapper import GraphNameMapper
 
 log = logging.getLogger(__name__)
 
@@ -29,8 +30,28 @@ class RDFStore(ABC):
     write operations versus a managed set of named-graphs so that
     the lastmod timestamp on each of these is being tracked properly
     so the 'age' of these can be compared easily to decide on required
-    or oportune updates
+    or opportune updates
     """
+
+    def __init__(
+        self, *, cleaner: Callable = None, mapper: GraphNameMapper = None
+    ):
+        """Constructor
+        :param cleaner: function to clean graphs before insert
+        :param mapper: helper class to convert custom key types of any type
+        to/from valid named_graph uri-strings
+        """
+        # TODO reconsider the default below as soon as upper layers start
+        # dealing with cleaning config themselves
+        # for new we ensure cleaning to fix rtdflib-jsonld parsing issue
+        cleaner = cleaner or reparse
+        # always ensure a no-op callable
+        self._cleaner: Callable = cleaner or (lambda graph: graph)
+        self._nmapper: GraphNameMapper = mapper or GraphNameMapper()
+
+    def clean(self, graph: Graph) -> Graph:
+        """Cleans the graph as suggested by the constructor setting"""
+        return self._cleaner(graph)
 
     @abstractmethod
     def select(self, sparql: str, named_graph: Optional[str]) -> Result:
@@ -157,7 +178,15 @@ class URIRDFStore(RDFStore):
     :type write_uri: Optional[str]
     """
 
-    def __init__(self, read_uri: str, write_uri: Optional[str] = None):
+    def __init__(
+        self,
+        read_uri: str,
+        write_uri: Optional[str] = None,
+        *,
+        cleaner: Callable = None,
+        mapper: GraphNameMapper = None,
+    ):
+        super().__init__(cleaner=cleaner, mapper=mapper)
         self.allows_update = False
         self._store_constr = None  # we will delay creating independent stores
         if write_uri is None:
@@ -199,7 +228,7 @@ class URIRDFStore(RDFStore):
         return result
 
     def insert(self, graph: Graph, named_graph: Optional[str] = NIL_NS):
-        graph = reparse(graph)
+        graph = self.clean(graph)
         assert (
             self.allows_update
         ), "data can not be inserted into a store if no write_uri is provided"
@@ -277,18 +306,21 @@ class URIRDFStore(RDFStore):
         self.sparql_store.remove_graph(store_graph)
         self._update_registry_lastmod(named_graph, timestamp())
 
+    def forget_graph(self, named_graph: str) -> None:
+        self._update_registry_lastmod(named_graph, None)
+
     @property
     def named_graphs(self) -> Iterable[str]:
         return self._update_registry_lastmod(None)
-
-    def forget_graph(self, named_graph: str) -> None:
-        self._update_registry_lastmod(named_graph, None)
 
 
 class MemoryRDFStore(RDFStore):
     # check if rdflib.Dataset could not help out here,
     # such would allign more logically and elegantly?
-    def __init__(self):
+    def __init__(
+        self, *, cleaner: Callable = None, mapper: GraphNameMapper = None
+    ):
+        super().__init__(cleaner=cleaner, mapper=mapper)
         self._all: Graph = Graph(**g_cfg_kwargs)
         self._named_graphs = dict()
         self._admin_registry = dict()
@@ -302,7 +334,7 @@ class MemoryRDFStore(RDFStore):
         return target.query(sparql)
 
     def insert(self, graph: Graph, named_graph: Optional[str] = None):
-        graph = reparse(graph)
+        graph = self.clean(graph)
         named_graph_graph = None
         if named_graph is not None:
             if named_graph not in self._named_graphs:
@@ -320,12 +352,12 @@ class MemoryRDFStore(RDFStore):
             self._all -= self._named_graphs.pop(named_graph)
         self._admin_registry[named_graph] = timestamp()
 
+    def forget_graph(self, named_graph: str) -> None:
+        self._admin_registry.pop(named_graph)
+
     @property
     def named_graphs(self) -> Iterable[str]:
         return self._admin_registry.keys()
-
-    def forget_graph(self, named_graph: str) -> None:
-        self._admin_registry.pop(named_graph)
 
 
 class RDFStoreDecorator(RDFStore):
@@ -339,6 +371,8 @@ class RDFStoreDecorator(RDFStore):
         :param store: the actual store to wrap and decorate
         :type store: RDFStore
         """
+        # for now decorators do not support stepping inbetween
+        # the mapper and cleaner of the core
         self._core = store
 
     def select(self, sparql: str, named_graph: Optional[str] = None) -> Result:
@@ -353,9 +387,9 @@ class RDFStoreDecorator(RDFStore):
     def drop_graph(self, named_graph: str) -> None:
         return self._core.drop_graph(named_graph)
 
+    def forget_graph(self, named_graph: str) -> None:
+        return self._core.forget_graph(named_graph)
+
     @property
     def named_graphs(self) -> Iterable[str]:
         return self._core.named_graphs
-
-    def forget_graph(self, named_graph: str) -> None:
-        return self._core.forget_graph(named_graph)
