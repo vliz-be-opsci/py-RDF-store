@@ -173,9 +173,7 @@ def build_clean_chain(*specs) -> Callable:
         # that can be added at the end of that chain
         grouped_fn[Level.Triple].append(apply_node_chain)
 
-    triple_chain: list = grouped_fn[
-        Level.Triple
-    ]  # all the triple-level-functions
+    triple_chain: list = grouped_fn[Level.Triple]  # all fn @triple-level
     log.debug(f"building {triple_chain=}")
     if len(triple_chain) > 0:
 
@@ -225,7 +223,7 @@ def clean_graph(graph: Graph, *specs: List[str | Callable]) -> Graph:
 
     :param graph: to be cleaned
     :param specs: list of cleaner-functions or strings that match
-    known keys in the dictionary  NAMED_CLEAN_FUNCTIONS.
+    known keys in the dictionary NAMED_CLEAN_FUNCTIONS.
     These functions need to provide an attribute .level that
     uses one of the values in the Level Enum to indicate on what level
     they work. Depending on that level the function signature should
