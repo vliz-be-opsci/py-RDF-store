@@ -313,7 +313,7 @@ class MemoryRDFStore(RDFStore):
         self._all += graph
 
     def lastmod_ts(self, named_graph: str) -> datetime:
-        return self._admin_registry[named_graph]
+        return self._admin_registry.get(named_graph, None)
 
     def drop_graph(self, named_graph: str) -> None:
         if named_graph is not None and named_graph in self._named_graphs:
