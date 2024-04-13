@@ -7,6 +7,7 @@ from typing import Optional
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
+from .clean import reparse
 
 log = logging.getLogger(__name__)
 
@@ -20,17 +21,6 @@ g_cfg_kwargs = dict(bind_namespaces="none")
 
 def timestamp():
     return datetime.now(UTC_tz)
-
-
-def reparse(g: Graph, format="nt"):
-    """This is a hack workaround for issue
-    https://github.com/RDFLib/rdflib/issues/2760
-    It reproduces the graph by serializing and parsing it again
-    Via an intermediate format (not jsonld!) that is known to work
-    :param g: the graph to reparse
-    :param format: the intermediate format to use
-    """
-    return Graph().parse(data=g.serialize(format=format), format=format)
 
 
 class RDFStore(ABC):
