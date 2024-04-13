@@ -9,8 +9,7 @@
 
 from .build import create_rdf_store
 from .clean import build_clean_chain, clean_graph, clean_uri_node
-from .mapper import GraphNameMapper
-from .store import RDFStore
+from .store import GraphNameMapper, RDFStore
 
 __all__ = [
     "RDFStore",

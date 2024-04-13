@@ -2,14 +2,14 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
+from urllib.parse import unquote
 
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
 
-from .clean import reparse
-from .mapper import GraphNameMapper
+from .clean import clean_uri_str, reparse
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +23,59 @@ g_cfg_kwargs = dict(bind_namespaces="none")
 
 def timestamp():
     return datetime.now(UTC_tz)
+
+
+class GraphNameMapper:
+    """Helper class to convert external keys objects into graph-names."""
+
+    def __init__(self, base: str = "urn:none:"):
+        """constructor
+
+        :param base: (optional) base_uri to apply,
+        - defaults to 'urn:none'
+        :type base: str
+        """
+        self._base = str(base)
+
+    def key_to_ng(self, key: Any) -> str:
+        """converts identifier key object to a named_graph (uri-string)
+
+        :param key: string version of this is used in the named_graph
+        :type key: str
+        :returns: uri representing the key, to be used as named-graph
+        :rtype: str
+        """
+        return f"{self._base}{clean_uri_str(str(key))}"
+
+    def ng_to_key(self, ng: str) -> str:
+        """converts named_graph uri back into the string representation
+        of the identifier-key-object
+
+        :param ng: uri of the named-graph
+        :type ng: str
+        :returns: the str representation of the matching identifier key-object
+        :rtype: str
+        """
+        assert ng.startswith(self._base), (
+            f"Unknown {ng=}. " f"It should start with {self._base=}"
+        )
+        lead: int = len(self._base)
+        return unquote(ng[lead:])
+
+    def get_keys_in_store(self, store) -> Iterable[str]:
+        """selects those named graphs in the store.named_graphs under our base
+        and converts them into travharv config names
+
+        :param store: the store to grab & filter the named_graphs from
+        :type store: RDFStore
+        :returns: list of str representation sof identifier key objects found
+        :rtype: List[str]
+        """
+        return [
+            self.ng_to_key(ng)
+            for ng in store.named_graphs
+            if ng.startswith(self._base)
+        ]  # filter and convert the named_graphs to config names we handle
 
 
 class RDFStore(ABC):
@@ -52,6 +105,80 @@ class RDFStore(ABC):
     def clean(self, graph: Graph) -> Graph:
         """Cleans the graph as suggested by the constructor setting"""
         return self._cleaner(graph)
+
+    def named_graph_for_key(self, key: Any) -> str:
+        """Converts the identifier key into a valid uri useable as named_graph
+        :param key: identifier key
+        :return: uri of matching named_graph
+        """
+        return self._nmapper.key_to_ng(key)
+
+    def insert_for_key(self, graph: Graph, key: str) -> None:
+        """inserts the triples from the passed graph
+        into a graph tied to the key
+
+        :param graph: the graph of triples to insert
+        :type graph: Graph
+        :param key: the identifier key
+        :type key: str
+        :rtype: None
+        """
+        ng: str = self.named_graph_for_key(key)
+        # check if graph is not Nonetype or empty
+        if graph is None or len(graph) == 0:
+            log.warning(f"Graph for {key} is empty. Nothing to insert.")
+            return
+        return self.insert(graph, ng)
+
+    def verify_max_age_of_key(self, key: Any, age_minutes: int) -> bool:
+        """verifies that a certain graph is not aged older
+        than a certain amount of minutes
+
+        :param key: the name of the config to check
+        :type key: str
+        :param age_minutes: the max acceptable age in minutes
+        :type age_minutes: int
+        :return: True if the contents of the store associated
+        to the config has aged less than the passed number of
+        minutes in the argument, else False
+        :rtype: bool
+        """
+        ng: str = self.named_graph_for_key(key)
+        return self.verify_max_age(ng, age_minutes)
+
+    @property
+    def keys(self) -> Iterable[str]:
+        """returns the known & managed identifier keys in the store
+
+        :return: the list of identifier keys, known and managed
+        (Note: possibly already deleted, but not forgotten) in this store
+        :rtype: List[str]
+        """
+        return self._nmapper.get_keys_in_store(self)
+
+    def drop_graph_for_key(self, key: Any) -> None:
+        """drops the content in graph associated to specified identifier key
+        (and all its contents)
+
+        :param key: the uri describing the named_graph to drop
+        :type key: str
+        :rtype: None
+        """
+        ng: str = self.named_graph_for_key(key)
+        return self.drop_graph(ng)
+
+    def forget_graph_for_key(self, key: Any) -> None:
+        """forgets about the identifier key being under control
+        This functions independent of the drop_graph method.
+        So any client of this service is expected to decide when
+        (or not) to combine both
+
+        :param key: the identifier key to which associated graph to forget
+        :type key: Any
+        :rtype: None
+        """
+        ng: str = self.named_graph_for_key(key)
+        return self.forget_graph(ng)
 
     @abstractmethod
     def select(self, sparql: str, named_graph: Optional[str]) -> Result:
