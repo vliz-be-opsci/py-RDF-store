@@ -198,7 +198,7 @@ def build_clean_chain(*specs) -> Callable:
         # that can be added at the end of that chain
         grouped_fn[Level.Graph].append(
             apply_triple_chain
-        )  # at the end of the triple-group
+        )
 
     graph_chain: list = grouped_fn[Level.Graph]  # all graph-level-functions
     log.debug(f"building {graph_chain=}")
