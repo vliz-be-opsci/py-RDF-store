@@ -80,7 +80,7 @@ def normalise_scheme_str(
     domain: str | None = "schema.org",
     to_scheme: str | None = "https",
 ) -> str:
-    # todo check uri matches ^https?://«domain».*
+    # check uri matches ^https?://«domain».*
     # if not return input, else
     # replace ^https? part with desired to_scheme
     pattern = rf"^https?://{domain}"
@@ -194,9 +194,7 @@ def build_clean_chain(*specs) -> Callable:
         # note this by itself this is a graph-level function
         apply_triple_chain.level = Level.Graph
         # that can be added at the end of that chain
-        grouped_fn[Level.Graph].append(
-            apply_triple_chain
-        )
+        grouped_fn[Level.Graph].append(apply_triple_chain)
 
     graph_chain: list = grouped_fn[Level.Graph]  # all graph-level-functions
     log.debug(f"building {graph_chain=}")
