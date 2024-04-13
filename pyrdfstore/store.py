@@ -7,6 +7,7 @@ from typing import Optional
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
+
 from .clean import reparse
 
 log = logging.getLogger(__name__)

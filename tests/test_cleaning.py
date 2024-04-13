@@ -1,16 +1,22 @@
 #! /usr/bin/env python
-from conftest import TEST_INPUT_FOLDER, format_from_extension, loadfilegraph
-from rdflib import BNode, Graph, URIRef, Literal, Namespace
-from util4tests import log, run_single_test
-from typing import Callable
 import json
+from typing import Callable
+
+from conftest import TEST_INPUT_FOLDER, format_from_extension, loadfilegraph
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
+from util4tests import log, run_single_test
 
 from pyrdfstore.clean import (
+    NAMED_CLEAN_FUNCTIONS,
+    Level,
+    build_clean_chain,
+    check_valid_uri,
+    clean_graph,
+    clean_uri_node,
+    clean_uri_str,
+    normalise_scheme_node,
+    normalise_scheme_str,
     reparse,
-    check_valid_uri, clean_uri_node, clean_uri_str,
-    normalise_scheme_str, normalise_scheme_node,
-    Level, NAMED_CLEAN_FUNCTIONS,
-    build_clean_chain, clean_graph,
 )
 
 SCHEMA: Namespace = Namespace("https://schema.org/")
@@ -39,9 +45,9 @@ def test_compare_bnodes_ttl_jsonld():
         for i, item in enumerate(items):
             log.debug(f". found {i} -> {type(item).__name__} {item.n3()=} ")
             assert isinstance(item, BNode)
-            assert item.n3()[2:] not in localnames, (
-                f"problem with format {fmt}"
-            )
+            assert (
+                item.n3()[2:] not in localnames
+            ), f"problem with format {fmt}"
 
 
 def test_compare_bnodes_ttl_jsonld_files():
@@ -64,9 +70,9 @@ def test_compare_bnodes_ttl_jsonld_files():
         for i, p in enumerate(persons):
             log.debug(f". found {i} -> {type(p).__name__} {p.n3()=} ")
             assert isinstance(p, BNode)
-            assert p.n3()[2:] not in localnames, (
-                "local id {p.n3()} used in file should have been replaced"
-            )
+            assert (
+                p.n3()[2:] not in localnames
+            ), "local id {p.n3()} used in file should have been replaced"
 
 
 def test_clean_uri_str():
@@ -80,12 +86,12 @@ def test_clean_uri_str():
     smart_safe_again = clean_uri_str(smart_safe, smart=True)
 
     assert force_safe == smart_safe
-    assert force_safe != force_safe_again, (
-        "forced cleaning should not be idempotent"
-    )
-    assert smart_safe == smart_safe_again, (
-        "smart cleaning should be idempotent"
-    )
+    assert (
+        force_safe != force_safe_again
+    ), "forced cleaning should not be idempotent"
+    assert (
+        smart_safe == smart_safe_again
+    ), "smart cleaning should be idempotent"
 
 
 def test_clean_uri_node():
@@ -117,20 +123,44 @@ def test_normalise_scheme_node():
     https_domain = f"https://{domain}/tester"
 
     # in this domain we want to force http scheme
-    assert http_domain == normalise_scheme_str(http_domain, domain=domain, to_scheme="http")
-    assert http_domain == normalise_scheme_str(https_domain, domain=domain, to_scheme="http")
-    assert http_domain == str(normalise_scheme_node(URIRef(http_domain), domain=domain, to_scheme="http"))
-    assert http_domain == str(normalise_scheme_node(URIRef(https_domain), domain=domain, to_scheme="http"))
+    assert http_domain == normalise_scheme_str(
+        http_domain, domain=domain, to_scheme="http"
+    )
+    assert http_domain == normalise_scheme_str(
+        https_domain, domain=domain, to_scheme="http"
+    )
+    assert http_domain == str(
+        normalise_scheme_node(
+            URIRef(http_domain), domain=domain, to_scheme="http"
+        )
+    )
+    assert http_domain == str(
+        normalise_scheme_node(
+            URIRef(https_domain), domain=domain, to_scheme="http"
+        )
+    )
 
     no_domain = "none.ext"
     http_no_domain = f"http://{no_domain}/ignored"
     https_no_domain = f"https://{no_domain}/ignored"
 
     # and that should ignore uri from other domains
-    assert http_no_domain == normalise_scheme_str(http_no_domain, domain=domain, to_scheme="http")
-    assert https_no_domain == normalise_scheme_str(https_no_domain, domain=domain, to_scheme="http")
-    assert http_no_domain == str(normalise_scheme_node(URIRef(http_no_domain), domain=domain, to_scheme="http"))
-    assert https_no_domain == str(normalise_scheme_node(URIRef(https_no_domain), domain=domain, to_scheme="http"))
+    assert http_no_domain == normalise_scheme_str(
+        http_no_domain, domain=domain, to_scheme="http"
+    )
+    assert https_no_domain == normalise_scheme_str(
+        https_no_domain, domain=domain, to_scheme="http"
+    )
+    assert http_no_domain == str(
+        normalise_scheme_node(
+            URIRef(http_no_domain), domain=domain, to_scheme="http"
+        )
+    )
+    assert https_no_domain == str(
+        normalise_scheme_node(
+            URIRef(https_no_domain), domain=domain, to_scheme="http"
+        )
+    )
 
 
 def test_clean_chain():
@@ -140,6 +170,7 @@ def test_clean_chain():
         nonlocal count_triples
         count_triples += 1  # testable side-effect
         return t  # do no real filtering
+
     custom_triple_filter.level = Level.Triple
 
     specs = list(NAMED_CLEAN_FUNCTIONS.keys())  # apply all filters
@@ -149,25 +180,24 @@ def test_clean_chain():
     graph: Graph = Graph()  # the testgraph to clean
 
     bnode_name: str = "problematic_blanknode"
-    json_data: str = json.dumps({
-        "@id": f"_:{bnode_name}",
-        "@type": EX.TestType
-    })
+    json_data: str = json.dumps(
+        {"@id": f"_:{bnode_name}", "@type": EX.TestType}
+    )
     log.debug(f"parsing {json_data=}")
     graph.parse(data=json_data, format="json-ld")
 
-    bad_schema_org_triple: tuple = tuple((
-        BNode(),
-        URIRef("http://schema.org/one"),
-        Literal("schema.org-clean-test")
-    ))
+    bad_schema_org_triple: tuple = tuple(
+        (
+            BNode(),
+            URIRef("http://schema.org/one"),
+            Literal("schema.org-clean-test"),
+        )
+    )
     graph.add(bad_schema_org_triple)
 
-    bad_uri_triple = tuple((
-        BNode(),
-        SCHEMA.downloadUrl,
-        URIRef("http://example.org/")
-    ))
+    bad_uri_triple = tuple(
+        (BNode(), SCHEMA.downloadUrl, URIRef("http://example.org/"))
+    )
     graph.add(bad_uri_triple)
 
     log.debug(f"cleaning:\n{graph.serialize(format='nt')}")
@@ -175,7 +205,7 @@ def test_clean_chain():
     log.debug(f"cleaned to:\n{cleaned.serialize(format='nt')}")
 
     # assert all issues vanished
-    count_bnodes:int = 0
+    count_bnodes: int = 0
     count_literals: int = 0
     count_uriref: int = 0
     count_other: int = 0
@@ -211,8 +241,6 @@ def test_clean_chain():
     assert expected_literals == count_literals
     assert expected_uriref == count_uriref
     assert expected_other == count_other
-
-
 
 
 if __name__ == "__main__":

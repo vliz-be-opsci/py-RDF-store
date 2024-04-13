@@ -1,12 +1,12 @@
 import logging
-from rdflib import Graph, URIRef, Literal, BNode
+import re
+from enum import Enum
+from functools import reduce
 from typing import Callable, List
 from urllib.parse import quote
-import validators
-import re
-from functools import reduce
-from enum import Enum
 
+import validators
+from rdflib import BNode, Graph, Literal, URIRef
 
 log = logging.getLogger(__name__)
 
@@ -36,15 +36,15 @@ def check_valid_uri(uri: str) -> bool:
     """Checks if the uri is valid (does not contain chars it should not)
     :param uri: the uri to check
     :type uri: str
-    :return: True of uri is ok, else False  """
+    :return: True of uri is ok, else False"""
     return bool(validators.url(uri))
 
 
 def clean_uri_str(uri: str, smart: bool = False) -> str:
     """Escapes unacceptable chars in a URI.
     :param smart: (optional) flag indicating smart-mode of operation.
-      Beinfg 'smart' indicates the routine will only clean if it is 
-      needed. In other words: if True this does no cleaning is the 
+      Beinfg 'smart' indicates the routine will only clean if it is
+      needed. In other words: if True this does no cleaning is the
       uri checks out to be already valid
       - defaults to False, so executes a forced cleaning
       Note that smart=True should make the result idempotent,
@@ -54,7 +54,7 @@ def clean_uri_str(uri: str, smart: bool = False) -> str:
     if smart and check_valid_uri(uri):
         return uri
     # else
-    return quote(uri, safe='~@#$&()*!+=:;,?/\'')
+    return quote(uri, safe="~@#$&()*!+=:;,?/'")
 
 
 def clean_uri_node(ref: URIRef | BNode | Literal) -> URIRef | BNode | Literal:
@@ -75,12 +75,16 @@ def clean_uri_node(ref: URIRef | BNode | Literal) -> URIRef | BNode | Literal:
 clean_uri_node.level = Level.Node
 
 
-def normalise_scheme_str(uri: str, domain: str | None = "schema.org", to_scheme: str | None = "https") -> str:
+def normalise_scheme_str(
+    uri: str,
+    domain: str | None = "schema.org",
+    to_scheme: str | None = "https",
+) -> str:
     # todo check uri matches ^https?://«domain».*
     # if not return input, else
     # replace ^https? part with desired to_scheme
-    pattern = fr"^https?://{domain}"
-    fixed_form = fr"{to_scheme}://{domain}"
+    pattern = rf"^https?://{domain}"
+    fixed_form = rf"{to_scheme}://{domain}"
     log.debug(f"substition of {pattern} into {fixed_form} on {uri}")
     return re.sub(pattern, fixed_form, uri)
 
@@ -88,14 +92,16 @@ def normalise_scheme_str(uri: str, domain: str | None = "schema.org", to_scheme:
 def normalise_scheme_node(
     ref: URIRef | BNode | Literal,
     domain: str | None = "schema.org",
-    to_scheme: str | None = "https"
+    to_scheme: str | None = "https",
 ) -> URIRef | BNode | Literal:
     log.debug("normalise_scheme_node called")
     if not isinstance(ref, URIRef):
         return ref  # nothing to do if not URIRef
     # else
     uri = str(ref)
-    return URIRef(normalise_scheme_str(uri, domain=domain, to_scheme=to_scheme))
+    return URIRef(
+        normalise_scheme_str(uri, domain=domain, to_scheme=to_scheme)
+    )
 
 
 normalise_scheme_node.level = Level.Node
@@ -116,27 +122,38 @@ def build_clean_chain(*specs) -> Callable:
     assert specs, "No specs provided, no clean_chain to build"
     log.debug(f"building chain from {specs=}")
     # convert names to functions, and filter for fitting functions
-    chain_fn = filter(lambda spec: spec is not None and hasattr(spec, "level"), (
-        spec if callable(spec) else NAMED_CLEAN_FUNCTIONS.get(str(spec), None)
-        for spec in specs)
+    chain_fn = filter(
+        lambda spec: spec is not None and hasattr(spec, "level"),
+        (
+            (
+                spec
+                if callable(spec)
+                else NAMED_CLEAN_FUNCTIONS.get(str(spec), None)
+            )
+            for spec in specs
+        ),
     )
     # group per level
     grouped_fn = reduce(  # group chain of cleaners per level
         lambda d, fn: d.get(fn.level, list()).append(fn) or d,
         chain_fn,  # list of functions to run over
-        {lvl: list() for lvl in Level}  # inital dict of empty [] per level
+        {lvl: list() for lvl in Level},  # inital dict of empty [] per level
     )
     log.debug(f"done grouping: {grouped_fn=}")
     remaining: int = reduce(
         lambda sum, lvl_list: sum + len(lvl_list),  # aggregate list lengths
         grouped_fn.values(),  # of all the lists associated to the levels
-        0
+        0,
     )
-    assert remaining > 0, f"No remaining {remaining} filters on any level. Bad cleaning specs provided."
+    assert remaining > 0, (
+        f"No remaining {remaining} filters on any level. "
+        "Bad cleaning specs provided."
+    )
 
     node_chain: list = grouped_fn[Level.Node]  # all the node-level functions
     log.debug(f"building {node_chain=}")
     if len(node_chain) > 0:
+
         def apply_node_chain(triple: tuple) -> tuple:
             # applies the node level cleaning functions
             log.debug("apply node-level chain cleaning")
@@ -145,19 +162,23 @@ def build_clean_chain(*specs) -> Callable:
                     reduce(  # by
                         lambda n, node_fn: node_fn(n),  # chain-applying
                         node_chain,  # all the node-functions
-                        node  # on the input nodes
+                        node,  # on the input nodes
                     )
                     for node in triple  # coming from the input triple
                 )
             )
+
         # note this by itself is a triple-level function
         apply_node_chain.level = Level.Triple
         # that can be added at the end of that chain
         grouped_fn[Level.Triple].append(apply_node_chain)
 
-    triple_chain: list = grouped_fn[Level.Triple]  # all the triple-level-functions
+    triple_chain: list = grouped_fn[
+        Level.Triple
+    ]  # all the triple-level-functions
     log.debug(f"building {triple_chain=}")
     if len(triple_chain) > 0:
+
         def apply_triple_chain(graph: Graph) -> Graph:
             log.debug("apply triple-level chain cleaning")
             # applies the triple level cleaning functions
@@ -167,26 +188,33 @@ def build_clean_chain(*specs) -> Callable:
                     reduce(  # after
                         lambda t, triple_fn: triple_fn(t),  # chain-applying
                         triple_chain,  # all the triple-level-functions
-                        triple  # on them
+                        triple,  # on them
                     )
                 )
             return clean
+
         # note this by itself this is a graph-level function
         apply_triple_chain.level = Level.Graph
         # that can be added at the end of that chain
-        grouped_fn[Level.Graph].append(apply_triple_chain)  # at the end of the triple-group
+        grouped_fn[Level.Graph].append(
+            apply_triple_chain
+        )  # at the end of the triple-group
 
     graph_chain: list = grouped_fn[Level.Graph]  # all graph-level-functions
     log.debug(f"building {graph_chain=}")
-    assert len(graph_chain) > 0, "No resulting actual filtering to do. Must be bug or bad specs provided."
+    assert len(graph_chain) > 0, (
+        "No resulting actual filtering to do. "
+        "Must be bug or bad specs provided."
+    )
 
     def cleaner(graph: Graph) -> Graph:
         log.debug("main graph-level cleaning")
         return reduce(  # works by
             lambda g, graph_fn: graph_fn(g),  # chain-applying
             graph_chain,  # all graph-level-functions
-            graph  # initial value is the passed node
+            graph,  # initial value is the passed node
         )
+
     cleaner.level = Level.Graph
     return cleaner
 
@@ -198,9 +226,9 @@ def clean_graph(graph: Graph, *specs: List[str | Callable]) -> Graph:
     :param graph: to be cleaned
     :param specs: list of cleaner-functions or strings that match
     known keys in the dictionary  NAMED_CLEAN_FUNCTIONS.
-    These functions need to provide an attribute .level that 
+    These functions need to provide an attribute .level that
     uses one of the values in the Level Enum to indicate on what level
-    they work. Depending on that level the function signature should 
+    they work. Depending on that level the function signature should
     match:
     - fn(graph: Graph) -> Graph:
     - fn(triple: tuple) -> tuple:
