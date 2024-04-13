@@ -37,6 +37,8 @@ def check_valid_uri(uri: str) -> bool:
     :param uri: the uri to check
     :type uri: str
     :return: True of uri is ok, else False"""
+    if uri.startswith("urn:"):
+        uri = "http://make.safe/" + uri
     return bool(validators.url(uri))
 
 
