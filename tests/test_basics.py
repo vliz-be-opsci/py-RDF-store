@@ -75,6 +75,18 @@ def test_uri_with_odd_chars(rdf_stores: Iterable[RDFStore]):
         )
 
 
+@pytest.mark.usefixtures("rdf_stores")
+def test_unknown_graph_age(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #47"""
+    unknown_ng: str = f"urn:test:unkown-graph-age:{uuid4()}"
+    for rdf_store in rdf_stores:
+        rdf_store_type: str = type(rdf_store).__name__
+        assert not rdf_store.verify_max_age(unknown_ng, 1), (
+            f"{rdf_store_type} :: verification of max_age for unknown graphs "
+            "should always return False, and not throw KeyError"
+        )
+
+
 @pytest.mark.usefixtures("rdf_stores", "example_graphs")
 def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
     nums = range(2)
