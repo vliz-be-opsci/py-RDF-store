@@ -9,7 +9,7 @@ from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLStore, SPARQLUpdateStore
 from rdflib.query import Result
 
-from .clean import clean_uri_str, reparse
+from .clean import clean_uri_str, default_cleaner
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class RDFStore(ABC):
         # TODO reconsider the default below as soon as upper layers start
         # dealing with cleaning config themselves
         # for new we ensure cleaning to fix rtdflib-jsonld parsing issue
-        cleaner = cleaner or reparse
+        cleaner = cleaner or default_cleaner()
         # always ensure a no-op callable
         self._cleaner: Callable = cleaner or (lambda graph: graph)
         self._nmapper: GraphNameMapper = mapper or GraphNameMapper()

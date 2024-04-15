@@ -8,7 +8,12 @@
 """
 
 from .build import create_rdf_store
-from .clean import build_clean_chain, clean_graph, clean_uri_node
+from .clean import (
+    build_clean_chain,
+    clean_graph,
+    clean_uri_node,
+    default_cleaner,
+)
 from .store import GraphNameMapper, RDFStore
 
 __all__ = [
@@ -18,4 +23,5 @@ __all__ = [
     "build_clean_chain",
     "clean_graph",
     "clean_uri_node",
+    "default_cleaner",
 ]

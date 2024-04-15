@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from enum import Enum
 from functools import reduce
@@ -215,6 +216,12 @@ def build_clean_chain(*specs) -> Callable:
 
     cleaner.level = Level.Graph
     return cleaner
+
+
+def default_cleaner() -> Callable:
+    fallback_specs: str = NAMED_CLEAN_FUNCTIONS.keys()  # all known cleaning
+    specs: str = os.getenv("RDFSTORE_CLEANSPECS", fallback_specs)
+    return build_clean_chain(*specs)
 
 
 def clean_graph(graph: Graph, *specs: List[str | Callable]) -> Graph:
