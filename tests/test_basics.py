@@ -108,7 +108,7 @@ def test_verify_ref_time(rdf_stores: Iterable[RDFStore]):
         )
 
         ts_post = timestamp()
-        assert not rdf_store.verify_max_age(key, reference_time=ts_post), (
+        assert not rdf_store.verify_max_age_of_key(key, reference_time=ts_post), (
             f"{rdf_store_type} :: verification of max_age for specific {key=} "
             "should return False vs timestamp after the insert action"
         )

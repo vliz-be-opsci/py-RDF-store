@@ -249,7 +249,7 @@ class RDFStore(ABC):
         named_graph_lastmod = named_graph_lastmod.astimezone(UTC_tz)
         reference_time = reference_time or timestamp()
         timelapsed: timedelta = reference_time - named_graph_lastmod
-        return bool(timelapsed.total_seconds() <= age_minutes * 60)
+        return bool(timelapsed.total_seconds() < age_minutes * 60)
 
     @abstractmethod
     def lastmod_ts(self, named_graph: str) -> datetime:
