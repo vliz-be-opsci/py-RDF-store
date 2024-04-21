@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Optional
 from urllib.parse import unquote
 
@@ -130,21 +130,29 @@ class RDFStore(ABC):
             return
         return self.insert(graph, ng)
 
-    def verify_max_age_of_key(self, key: Any, age_minutes: int) -> bool:
+    def verify_max_age_of_key(
+        self, key: Any, age_minutes: int = 0, reference_time: datetime = None
+    ) -> bool:
         """verifies that a certain graph is not aged older
         than a certain amount of minutes
 
         :param key: the name of the config to check
         :type key: str
         :param age_minutes: the max acceptable age in minutes
+         - optional, defaults to 0
         :type age_minutes: int
+        :param reference_time: the basis for the comparison
+         - optional, defaults to now()
+        :type reference_time: datetime
         :return: True if the contents of the store associated
         to the config has aged less than the passed number of
-        minutes in the argument, else False
+        minutes in the argument versus the reference_time, else False
         :rtype: bool
         """
         ng: str = self.named_graph_for_key(key)
-        return self.verify_max_age(ng, age_minutes)
+        return self.verify_max_age(
+            ng, age_minutes=age_minutes, reference_time=reference_time
+        )
 
     @property
     def keys(self) -> Iterable[str]:
@@ -209,7 +217,12 @@ class RDFStore(ABC):
         """
         pass
 
-    def verify_max_age(self, named_graph: str, age_minutes: int) -> bool:
+    def verify_max_age(
+        self,
+        named_graph: str,
+        age_minutes: int = 0,
+        reference_time: datetime = None,
+    ) -> bool:
         """verifies that a certain graph is not aged older than a certain
         amount of minutes
         Note: as this just uses self.lastmod_ts() from implementations
@@ -220,19 +233,23 @@ class RDFStore(ABC):
           the age of
         :type named_graph: str
         :param age_minutes: the max acceptable age in minutes
+         - optional, defaults to 0
         :type age_minutes: int
-        :return: True if the graph has aged less than the passed number of
-          minutes in the argument, else False
+        :param reference_time: the basis for the comparison
+         - optional, defaults to now()
+        :type reference_time: datetime
+        :return: True if the contents of the store associated
+        to the config has aged less than the passed number of
+        minutes in the argument versus the reference_time, else False
         :rtype: bool
         """
         named_graph_lastmod = self.lastmod_ts(named_graph)
         if named_graph_lastmod is None:
             return False
         named_graph_lastmod = named_graph_lastmod.astimezone(UTC_tz)
-        ts = timestamp()
-        return bool(
-            (ts - named_graph_lastmod).total_seconds() <= age_minutes * 60
-        )
+        reference_time = reference_time or timestamp()
+        timelapsed: timedelta = reference_time - named_graph_lastmod
+        return bool(timelapsed.total_seconds() <= age_minutes * 60)
 
     @abstractmethod
     def lastmod_ts(self, named_graph: str) -> datetime:

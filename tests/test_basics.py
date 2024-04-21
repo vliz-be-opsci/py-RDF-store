@@ -10,12 +10,13 @@ from conftest import (
     SELECT_ALL_SPO,
     TEST_INPUT_FOLDER,
     assert_file_ingest,
+    make_sample_graph,
 )
 from rdflib import Graph, Literal, URIRef
 from rdflib.query import Result
 from util4tests import log, run_single_test
 
-from pyrdfstore.store import RDFStore
+from pyrdfstore.store import RDFStore, timestamp
 
 
 @pytest.mark.usefixtures("rdf_stores", "example_graphs")
@@ -84,6 +85,32 @@ def test_unknown_graph_age(rdf_stores: Iterable[RDFStore]):
         assert not rdf_store.verify_max_age(unknown_ng, 1), (
             f"{rdf_store_type} :: verification of max_age for unknown graphs "
             "should always return False, and not throw KeyError"
+        )
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_verify_ref_time(rdf_stores: Iterable[RDFStore]):
+    """specific test for issue #51"""
+    key: str = f"ref-graph-age:{uuid4()}"
+    g: Graph = make_sample_graph(("X",))
+    for rdf_store in rdf_stores:
+        rdf_store_type: str = type(rdf_store).__name__
+        ts_ante = timestamp()
+
+        rdf_store.insert_for_key(g, key)
+        assert rdf_store.verify_max_age_of_key(key, age_minutes=1), (
+            f"{rdf_store_type} :: verification of max_age for specific {key=} "
+            "should return True withing the minute"
+        )
+        assert rdf_store.verify_max_age_of_key(key, reference_time=ts_ante), (
+            f"{rdf_store_type} :: verification of max_age for specific {key=} "
+            "should return True vs timestamp prior to insert action"
+        )
+
+        ts_post = timestamp()
+        assert not rdf_store.verify_max_age(key, reference_time=ts_post), (
+            f"{rdf_store_type} :: verification of max_age for specific {key=} "
+            "should return False vs timestamp after the insert action"
         )
 
 
