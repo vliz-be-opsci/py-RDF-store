@@ -133,8 +133,10 @@ class RDFStore(ABC):
     def verify_max_age_of_key(
         self, key: Any, age_minutes: int = 0, reference_time: datetime = None
     ) -> bool:
-        """verifies that a certain graph is not aged older
-        than a certain amount of minutes
+        """verifies that a certain graph is "sufficiently young"
+        i.e. not aged older than a certain amount of minutes
+        or not aged older then a certain reference_time
+        (potentially plus some minutes)
 
         :param key: the name of the config to check
         :type key: str
@@ -223,11 +225,10 @@ class RDFStore(ABC):
         age_minutes: int = 0,
         reference_time: datetime = None,
     ) -> bool:
-        """verifies that a certain graph is not aged older than a certain
-        amount of minutes
-        Note: as this just uses self.lastmod_ts() from implementations
-          those should just get that method right and can simply inherit
-          this one.
+        """verifies that a certain graph is "sufficiently young"
+        i.e. not aged older than a certain amount of minutes
+        or not aged older then a certain reference_time
+        (potentially plus some minutes)
 
         :param named_graph: the uri describing the named_graph to check
           the age of
@@ -249,7 +250,7 @@ class RDFStore(ABC):
         named_graph_lastmod = named_graph_lastmod.astimezone(UTC_tz)
         reference_time = reference_time or timestamp()
         timelapsed: timedelta = reference_time - named_graph_lastmod
-        return bool(timelapsed.total_seconds() < age_minutes * 60)
+        return bool(timelapsed.total_seconds() <= age_minutes * 60)
 
     @abstractmethod
     def lastmod_ts(self, named_graph: str) -> datetime:
