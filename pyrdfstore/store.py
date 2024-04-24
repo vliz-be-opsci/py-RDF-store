@@ -124,10 +124,6 @@ class RDFStore(ABC):
         :rtype: None
         """
         ng: str = self.named_graph_for_key(key)
-        # check if graph is not Nonetype or empty
-        if graph is None or len(graph) == 0:
-            log.warning(f"Graph for {key} is empty. Nothing to insert.")
-            return
         return self.insert(graph, ng)
 
     def verify_max_age_of_key(
