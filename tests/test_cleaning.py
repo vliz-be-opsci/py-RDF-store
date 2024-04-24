@@ -185,17 +185,22 @@ def test_clean_custom_chain():
         nonlocal count_triples
         count_triples += 1  # testable side-effect
         return trpl  # do no real filtering
+
     triple_count.level = Level.Triple
 
-    def dset_node_count(node: URIRef | BNode | Literal) -> URIRef | BNode | Literal:
+    def dset_node_count(
+        node: URIRef | BNode | Literal,
+    ) -> URIRef | BNode | Literal:
         nonlocal count_datasets
-        if (str(node) == ds_uri):
+        if str(node) == ds_uri:
             count_datasets += 1
         return node  # no real filtering
+
     dset_node_count.level = Level.Node
 
     def broken_filter(*args, **kwargs):
         raise RuntimeError("this will never happen")
+
     broken_filter.level = None  # not a valid level, so this will get skipped
 
     g: Graph = Graph()
@@ -210,7 +215,7 @@ def test_clean_custom_chain():
         for n in t:
             if isinstance(n, URIRef):
                 uri = str(n)
-                if ("schema.org" in uri):
+                if "schema.org" in uri:
                     schema_uri_count += 1
                     assert uri == ds_uri  # the only schema.org-uri used
     assert schema_uri_count == 2
@@ -249,11 +254,13 @@ def test_clean_chain():
     )
     graph.add(bad_schema_org_triple)
 
-    bad_uri_triple = tuple((
-        BNode(),
-        SCHEMA.downloadUrl,
-        URIRef("http://example.org/here+comes/[badness]")
-    ))
+    bad_uri_triple = tuple(
+        (
+            BNode(),
+            SCHEMA.downloadUrl,
+            URIRef("http://example.org/here+comes/[badness]"),
+        )
+    )
     graph.add(bad_uri_triple)
 
     log.debug(f"cleaning:\n{graph.serialize(format='nt')}")

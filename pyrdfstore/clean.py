@@ -126,16 +126,15 @@ def build_clean_chain(*specs) -> Callable:
     log.debug(f"building chain from {specs=}")
     # convert names to functions, and filter for fitting functions
     specs_fn = [
-        spec
-        if callable(spec)
-        else NAMED_CLEAN_FUNCTIONS.get(str(spec), None)
+        spec if callable(spec) else NAMED_CLEAN_FUNCTIONS.get(str(spec), None)
         for spec in specs
     ]
     log.debug(f"specs as funtions {specs_fn=}")
-    chain_fn = list(filter(
-        lambda spec: spec is not None and hasattr(spec, "level"),
-        specs_fn
-    ))
+    chain_fn = list(
+        filter(
+            lambda spec: spec is not None and hasattr(spec, "level"), specs_fn
+        )
+    )
     log.debug(f"chain of funtions {chain_fn=}")
     # group per level
     grouped_fn = reduce(  # group chain of cleaners per level
