@@ -1,8 +1,8 @@
 #! /usr/bin/env python
+from datetime import datetime
 from random import randint
 from typing import Iterable
 from uuid import uuid4
-from datetime import datetime
 
 import pytest
 from conftest import make_sample_graph
@@ -50,7 +50,7 @@ def test_fixtures(rdf_stores: Iterable[RDFStore]):
         decostore.insert_ng(sg)
         ts_post = timestamp()
         assert my_urn in decostore.named_graphs, (
-            f"{rdf_store_type} :: {my_urn=} should be available ng"
+            f"{rdf_store_type} :: {my_urn=} " "should be available ng"
         )
         all: Result = decostore.all_ng()
         log.debug(f"{rdf_store_type} :: got {len(all)=}")
@@ -63,7 +63,7 @@ def test_fixtures(rdf_stores: Iterable[RDFStore]):
 
         decostore.drop_ng()
         assert my_urn in decostore.named_graphs, (
-            f"{rdf_store_type} :: {my_urn=} should stil be available ng"
+            f"{rdf_store_type} :: {my_urn=} " "should stil be available ng"
         )
         all: Result = decostore.all_ng() or []
         log.debug(f"{rdf_store_type} :: got {len(all)=}")
@@ -71,7 +71,7 @@ def test_fixtures(rdf_stores: Iterable[RDFStore]):
 
         decostore.forget_ng()
         assert my_urn not in decostore.named_graphs, (
-            f"{rdf_store_type} :: should no longer be available ng"
+            f"{rdf_store_type} :: " "should no longer be available ng"
         )
 
 
