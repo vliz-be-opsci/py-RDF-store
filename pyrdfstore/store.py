@@ -199,7 +199,7 @@ class RDFStore(ABC):
         :return: the result of the query
         :rtype: Result
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def insert(self, graph: Graph, named_graph: Optional[str] = None) -> None:
@@ -213,7 +213,7 @@ class RDFStore(ABC):
         :type named_graph: str
         :rtype: None
         """
-        pass
+        pass  # pragma: no cover
 
     def verify_max_age(
         self,
@@ -262,7 +262,7 @@ class RDFStore(ABC):
         :return: the time of last modification (insert or drop)
         :rtype: datetime
         """
-        pass
+        pass  # pragma: no cover
 
     @property
     @abstractmethod
@@ -273,7 +273,7 @@ class RDFStore(ABC):
           (possibly already deleted) in this store
         :rtype: List[str]
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def drop_graph(self, named_graph: str) -> None:
@@ -287,7 +287,7 @@ class RDFStore(ABC):
         :type named_graph: str
         :rtype: None
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def forget_graph(self, named_graph: str) -> None:
@@ -305,7 +305,7 @@ class RDFStore(ABC):
         :type named_graph: str
         :rtype: None
         """
-        pass
+        pass  # pragma: no cover
 
 
 class URIRDFStore(RDFStore):
