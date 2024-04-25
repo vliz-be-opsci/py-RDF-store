@@ -24,6 +24,9 @@ loggers:
   pyrdfstore:
     level: DEBUG
     propagate: yes
+  pyrdfstore.clean:
+    level: ERROR
+    propagate: yes
   tests:
     level: DEBUG
     propagate: yes
