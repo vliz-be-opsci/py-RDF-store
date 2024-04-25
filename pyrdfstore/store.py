@@ -491,6 +491,7 @@ class MemoryRDFStore(RDFStore):
     def drop_graph(self, named_graph: str) -> None:
         if named_graph is not None and named_graph in self._named_graphs:
             self._all -= self._named_graphs.pop(named_graph)
+            self._named_graphs[named_graph] = Graph()
         self._admin_registry[named_graph] = timestamp()
 
     def forget_graph(self, named_graph: str) -> None:
