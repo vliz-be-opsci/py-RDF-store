@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+from random import choice
+from string import ascii_letters
 from time import sleep
 from typing import Iterable, List, Tuple
 from urllib.parse import quote
@@ -12,15 +14,16 @@ from conftest import (
     assert_file_ingest,
     make_sample_graph,
 )
-from rdflib import Graph, Literal, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.query import Result
 from util4tests import log, run_single_test
 
-from pyrdfstore.store import RDFStore, timestamp
+from pyrdfstore.store import MemoryRDFStore, RDFStore, timestamp
 
 
 @pytest.mark.usefixtures("rdf_stores", "example_graphs")
 def test_fixtures(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
+    log.info(f"test_fixtures ({len(rdf_stores)})")
     for rdf_store in rdf_stores:
         rdf_store_type = type(rdf_store).__name__
         assert rdf_store is not None, (
@@ -34,6 +37,7 @@ def test_fixtures(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
 
 @pytest.mark.usefixtures("rdf_stores")
 def test_uri_with_odd_chars(rdf_stores: Iterable[RDFStore]):
+    log.info(f"test_uri_with_odd_chars ({len(rdf_stores)})")
     doi: str = (
         "http://dx.doi.org/10.1656/1092-6194(2004)11[261:CBIAHC]2.0.CO;2"
     )
@@ -79,6 +83,7 @@ def test_uri_with_odd_chars(rdf_stores: Iterable[RDFStore]):
 @pytest.mark.usefixtures("rdf_stores")
 def test_unknown_graph_age(rdf_stores: Iterable[RDFStore]):
     """specific test for issue #47"""
+    log.info(f"test_unknown_graph_age ({len(rdf_stores)})")
     unknown_ng: str = f"urn:test:unkown-graph-age:{uuid4()}"
     for rdf_store in rdf_stores:
         rdf_store_type: str = type(rdf_store).__name__
@@ -91,6 +96,7 @@ def test_unknown_graph_age(rdf_stores: Iterable[RDFStore]):
 @pytest.mark.usefixtures("rdf_stores")
 def test_verify_ref_time(rdf_stores: Iterable[RDFStore]):
     """specific test for issue #51"""
+    log.info(f"test_verify_ref_time ({len(rdf_stores)})")
     key: str = f"ref-graph-age:{uuid4()}"
     g: Graph = make_sample_graph(("X",))
     for rdf_store in rdf_stores:
@@ -98,6 +104,7 @@ def test_verify_ref_time(rdf_stores: Iterable[RDFStore]):
         ts_ante = timestamp()
 
         rdf_store.insert_for_key(g, key)
+        assert key in rdf_store.keys
         assert rdf_store.verify_max_age_of_key(key, age_minutes=1), (
             f"{rdf_store_type} :: verification of max_age for specific {key=} "
             "should return True withing the minute"
@@ -118,6 +125,7 @@ def test_verify_ref_time(rdf_stores: Iterable[RDFStore]):
 
 @pytest.mark.usefixtures("rdf_stores", "example_graphs")
 def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
+    log.info(f"test_insert ({len(rdf_stores)})")
     nums = range(2)
 
     for rdf_store in rdf_stores:
@@ -163,6 +171,7 @@ def test_insert(rdf_stores: Iterable[RDFStore], example_graphs: List[Graph]):
 
 @pytest.mark.usefixtures("rdf_stores")
 def test_unkown_drop(rdf_stores: Iterable[RDFStore]):
+    log.info(f"test_unkown_drop ({len(rdf_stores)})")
     ns = f"urn:test:uuid:{uuid4()}"
     log.debug(f"trying to drop non-existant {ns=}")
 
@@ -189,6 +198,7 @@ def test_unkown_drop(rdf_stores: Iterable[RDFStore]):
 
 @pytest.mark.usefixtures("rdf_stores")
 def test_insert_large_graph(rdf_stores: Iterable[RDFStore]):
+    log.info(f"test_insert_large_graph ({len(rdf_stores)})")
     for rdf_store in rdf_stores:
         # check the ingest of a large turtle file with many triuples
         assert_file_ingest(rdf_store, TEST_INPUT_FOLDER / "large_turtle.ttl")
@@ -196,6 +206,7 @@ def test_insert_large_graph(rdf_stores: Iterable[RDFStore]):
 
 @pytest.mark.usefixtures("rdf_stores")
 def test_insert_large_statement(rdf_stores: Iterable[RDFStore]):
+    log.info(f"test_insert_large_statement ({len(rdf_stores)})")
     sparql = f"SELECT ?abstract WHERE {{ [] <{ DCT_ABSTRACT }> ?abstract }}"
 
     for rdf_store in rdf_stores:
@@ -230,6 +241,7 @@ def test_insert_named(
     example_graphs: List[Graph],
     quicktest: bool,
 ):
+    log.info(f"test_insert_named ({len(rdf_stores)})")
 
     # this test plans to create 2 named_graphs,
     # so they contain some overlapped ranges from the example_graphs fixture
@@ -353,6 +365,78 @@ def test_insert_named(
                 f"{rdf_store_type} :: expected triple for index { i } "
                 "not found in result of overall search"
             )
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_insert_nothing(rdf_stores: Iterable[RDFStore]):
+    log.info(f"test_insert_nothing ({len(rdf_stores)})")
+    ng = f"urn:test-insert-nothing:{uuid4()}"
+    for rdf_store in rdf_stores:
+        rdf_store_type = type(rdf_store).__name__
+        rdf_store.insert(Graph(), ng)  # empty graph
+        all = rdf_store.select(SELECT_ALL_SPO, ng)
+        assert len(all) == 0, (
+            f"{rdf_store_type} :: "
+            "after inserting no triples, none should be found"
+        )
+
+
+@pytest.mark.usefixtures("rdf_stores")
+def test_insert_drop_forget_forkey(rdf_stores: Iterable[RDFStore]):
+    log.info(f"test_insert_drop_forget_forkey ({len(rdf_stores)})")
+    rnd_key: str = "rnd/" + "".join(choice(ascii_letters) for i in range(12))
+    for rdf_store in rdf_stores:
+        # -- note: don't forget one extra key is in the admin graph
+        admin_triple: int = 0 if isinstance(rdf_store, MemoryRDFStore) else 1
+        rdf_store_type: str = type(rdf_store).__name__
+        g: Graph = Graph().add(
+            tuple(
+                (
+                    BNode(),
+                    URIRef("https://example.org/some/predicate"),
+                    Literal("content for " + rnd_key),
+                )
+            )
+        )
+        # capture pre state
+        size_pre = len(rdf_store.select(SELECT_ALL_SPO))
+        log.debug(f"prior state {size_pre=} / {rdf_store.keys=}")
+        assert rnd_key not in rdf_store.keys, (
+            f"{rdf_store_type} :: " f"pre insert {rnd_key} should not be known"
+        )
+        # insert
+        rdf_store.insert_for_key(g, rnd_key)
+        size_post_insert = len(rdf_store.select(SELECT_ALL_SPO))
+        log.debug(f"post state {size_post_insert=} / {rdf_store.keys=}")
+        assert rnd_key in rdf_store.keys, (
+            f"{rdf_store_type} :: " f"post insert {rnd_key} should be known"
+        )
+        # -- note: don't forget one extra key is in the admin graph
+        assert size_post_insert == size_pre + len(g) + admin_triple, (
+            f"{rdf_store_type} :: " "post insert extra triples should be there"
+        )
+        # drop
+        rdf_store.drop_graph_for_key(rnd_key)
+        size_post_drop = len(rdf_store.select(SELECT_ALL_SPO))
+        log.debug(f"post state {size_post_drop=} / {rdf_store.keys=}")
+        assert rnd_key in rdf_store.keys, (
+            f"{rdf_store_type} :: "
+            f"post drop {rnd_key} should still be known"
+        )
+        # -- note: don't forget one extra key is in the admin graph
+        assert size_post_drop == size_pre + admin_triple, (
+            f"{rdf_store_type} :: " "post drop key could make extra triple"
+        )
+        # forget
+        rdf_store.forget_graph_for_key(rnd_key)
+        size_post_forget = len(rdf_store.select(SELECT_ALL_SPO))
+        log.debug(f"post state {size_post_forget=} / {rdf_store.keys=}")
+        assert rnd_key not in rdf_store.keys, (
+            f"{rdf_store_type} :: " "post forget {rnd_key} should be gone"
+        )
+        assert size_post_forget == size_pre, (
+            f"{rdf_store_type} :: " "post forget state returned"
+        )
 
 
 @pytest.mark.usefixtures("rdf_stores", "sample_file_graph")
