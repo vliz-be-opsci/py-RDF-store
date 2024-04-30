@@ -25,6 +25,7 @@ EX: Namespace = Namespace("http://example.org/")
 
 
 def test_compare_bnodes_ttl_jsonld():
+    log.info("test_compare_bnodes_ttl_jsonld()")
     localnames = ["b0", "b1", "x9"]
     tst_content = dict()
 
@@ -54,6 +55,7 @@ def test_compare_bnodes_ttl_jsonld_files():
     """testing how rdlib jsonld parser is handling the "@id": "_:n1" in json
     see bug in rdflib: https://github.com/RDFLib/rdflib/issues/2760
     """
+    log.info("test_compare_bnodes_ttl_jsonld_files()")
     for fname in ("issue-42.jsonld", "issue-42.ttl"):
         localnames = [
             "b0",
@@ -76,6 +78,7 @@ def test_compare_bnodes_ttl_jsonld_files():
 
 
 def test_clean_uri_str():
+    log.info("test_clean_uri_str()")
     bad_uri: str = "https://example.org/with-[square]-brackets"
     assert not check_valid_uri(bad_uri)
 
@@ -95,6 +98,7 @@ def test_clean_uri_str():
 
 
 def test_clean_uri_node():
+    log.info("test_clean_uri_node()")
     bad_uri: str = "https://example.org/with-[square]-brackets"
     bad_ref_node: URIRef = URIRef(bad_uri)
     blank_node: BNode = BNode()
@@ -110,6 +114,7 @@ def test_clean_uri_node():
 
 
 def test_normalise_scheme_node():
+    log.info("test_normalise_scheme_node()")
     http_uri = "http://schema.org/test"
     https_uri = "https://schema.org/test"
 
@@ -163,7 +168,61 @@ def test_normalise_scheme_node():
     )
 
 
+def test_clean_noop():
+    log.info("test_clean_noop()")
+    g: Graph = Graph().add(tuple((BNode(), RDF.type, SCHEMA.DataSet)))
+    cg = clean_graph(g)  # when there is no cleaner-spec
+    assert cg == g
+
+
+def test_clean_custom_chain():
+    log.info("test_clean_custom_chain()")
+    count_triples: int = 0
+    count_datasets: int = 0
+    ds_uri: str = "http://schema.org/Dataset"
+
+    def triple_count(trpl: tuple) -> tuple:
+        nonlocal count_triples
+        count_triples += 1  # testable side-effect
+        return trpl  # do no real filtering
+
+    triple_count.level = Level.Triple
+
+    def dset_node_count(
+        node: URIRef | BNode | Literal,
+    ) -> URIRef | BNode | Literal:
+        nonlocal count_datasets
+        if str(node) == ds_uri:
+            count_datasets += 1
+        return node  # no real filtering
+
+    dset_node_count.level = Level.Node
+
+    def broken_filter(*args, **kwargs):
+        raise RuntimeError("this will never happen")
+
+    broken_filter.level = None  # not a valid level, so this will get skipped
+
+    g: Graph = Graph()
+    g.add(tuple((BNode(), RDF.type, URIRef(ds_uri))))
+    g.add(tuple((URIRef(ds_uri), EX.test, Literal("just something here"))))
+    cleaned = clean_graph(g, triple_count, dset_node_count, broken_filter)
+    assert count_triples == len(g) == 2
+    assert count_datasets == 2
+
+    schema_uri_count = 0
+    for t in cleaned.triples(tuple((None, None, None))):
+        for n in t:
+            if isinstance(n, URIRef):
+                uri = str(n)
+                if "schema.org" in uri:
+                    schema_uri_count += 1
+                    assert uri == ds_uri  # the only schema.org-uri used
+    assert schema_uri_count == 2
+
+
 def test_clean_chain():
+    log.info("test_clean_chain()")
     count_triples: int = 0
 
     def custom_triple_filter(t: tuple) -> tuple:
@@ -196,7 +255,11 @@ def test_clean_chain():
     graph.add(bad_schema_org_triple)
 
     bad_uri_triple = tuple(
-        (BNode(), SCHEMA.downloadUrl, URIRef("http://example.org/"))
+        (
+            BNode(),
+            SCHEMA.downloadUrl,
+            URIRef("http://example.org/here+comes/[badness]"),
+        )
     )
     graph.add(bad_uri_triple)
 

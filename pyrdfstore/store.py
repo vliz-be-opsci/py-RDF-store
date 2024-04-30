@@ -124,10 +124,6 @@ class RDFStore(ABC):
         :rtype: None
         """
         ng: str = self.named_graph_for_key(key)
-        # check if graph is not Nonetype or empty
-        if graph is None or len(graph) == 0:
-            log.warning(f"Graph for {key} is empty. Nothing to insert.")
-            return
         return self.insert(graph, ng)
 
     def verify_max_age_of_key(
@@ -203,7 +199,7 @@ class RDFStore(ABC):
         :return: the result of the query
         :rtype: Result
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def insert(self, graph: Graph, named_graph: Optional[str] = None) -> None:
@@ -217,7 +213,7 @@ class RDFStore(ABC):
         :type named_graph: str
         :rtype: None
         """
-        pass
+        pass  # pragma: no cover
 
     def verify_max_age(
         self,
@@ -266,7 +262,7 @@ class RDFStore(ABC):
         :return: the time of last modification (insert or drop)
         :rtype: datetime
         """
-        pass
+        pass  # pragma: no cover
 
     @property
     @abstractmethod
@@ -277,7 +273,7 @@ class RDFStore(ABC):
           (possibly already deleted) in this store
         :rtype: List[str]
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def drop_graph(self, named_graph: str) -> None:
@@ -291,7 +287,7 @@ class RDFStore(ABC):
         :type named_graph: str
         :rtype: None
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def forget_graph(self, named_graph: str) -> None:
@@ -309,7 +305,7 @@ class RDFStore(ABC):
         :type named_graph: str
         :rtype: None
         """
-        pass
+        pass  # pragma: no cover
 
 
 class URIRDFStore(RDFStore):
@@ -495,6 +491,7 @@ class MemoryRDFStore(RDFStore):
     def drop_graph(self, named_graph: str) -> None:
         if named_graph is not None and named_graph in self._named_graphs:
             self._all -= self._named_graphs.pop(named_graph)
+            self._named_graphs[named_graph] = Graph()
         self._admin_registry[named_graph] = timestamp()
 
     def forget_graph(self, named_graph: str) -> None:

@@ -3,7 +3,7 @@ import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Callable, List
+from typing import Callable, Iterable
 from urllib.parse import quote
 
 import validators
@@ -125,17 +125,17 @@ def build_clean_chain(*specs) -> Callable:
     assert specs, "No specs provided, no clean_chain to build"
     log.debug(f"building chain from {specs=}")
     # convert names to functions, and filter for fitting functions
-    chain_fn = filter(
-        lambda spec: spec is not None and hasattr(spec, "level"),
-        (
-            (
-                spec
-                if callable(spec)
-                else NAMED_CLEAN_FUNCTIONS.get(str(spec), None)
-            )
-            for spec in specs
-        ),
+    specs_fn = [
+        spec if callable(spec) else NAMED_CLEAN_FUNCTIONS.get(str(spec), None)
+        for spec in specs
+    ]
+    log.debug(f"specs as funtions {specs_fn=}")
+    chain_fn = list(
+        filter(
+            lambda spec: spec is not None and hasattr(spec, "level"), specs_fn
+        )
     )
+    log.debug(f"chain of funtions {chain_fn=}")
     # group per level
     grouped_fn = reduce(  # group chain of cleaners per level
         lambda d, fn: d.get(fn.level, list()).append(fn) or d,
@@ -224,7 +224,7 @@ def default_cleaner() -> Callable:
     return build_clean_chain(*specs)
 
 
-def clean_graph(graph: Graph, *specs: List[str | Callable]) -> Graph:
+def clean_graph(graph: Graph, *specs: Iterable[str | Callable]) -> Graph:
     """
     Cleans the graph based on the provided "cleaning specifications"
 
@@ -245,5 +245,5 @@ def clean_graph(graph: Graph, *specs: List[str | Callable]) -> Graph:
     if len(specs) == 1 and callable(specs[0]):
         return specs[0](graph)  # reuse a pre-built cleaner
     # else build cleaner from specs and run it
-    cleaner = build_clean_chain(specs)
+    cleaner = build_clean_chain(*specs)
     return cleaner(graph)
