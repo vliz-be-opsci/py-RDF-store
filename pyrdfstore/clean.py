@@ -8,6 +8,7 @@ from urllib.parse import quote
 
 import validators
 from rdflib import BNode, Graph, Literal, URIRef
+from urnparse import URN8141, InvalidURNFormatError
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ def reparse(g: Graph, format="nt"):
     https://github.com/RDFLib/rdflib/issues/2760
     It reproduces the graph by serializing and parsing it again
     Via an intermediate format (not jsonld!) that is known to work
+
     :param g: the graph to reparse
     :param format: the intermediate format to use
     """
@@ -33,26 +35,52 @@ def reparse(g: Graph, format="nt"):
 reparse.level = Level.Graph
 
 
+def check_valid_urn(urn: str) -> bool:
+    """Checks if the urn is valid (follows format rules)
+
+    :param urn: the uri to check
+    :type urn: str
+    :return: True of urn is ok, else False"""
+    try:
+        URN8141.from_string(urn)
+        return True
+    except InvalidURNFormatError:
+        return False
+
+
+def check_valid_url(url: str) -> bool:
+    """Checks if the url is valid (follows format rules)
+
+    :param url: the url to check
+    :type url: str
+    :return: True if url is ok, else False"""
+    return bool(validators.url(url))
+
+
 def check_valid_uri(uri: str) -> bool:
-    """Checks if the uri is valid (does not contain chars it should not)
+    """Checks if the uri is valid (follows format rules)
+    note that URI can be either of type URN or URL. So this
+    will recognise which one and use the corresponding check
+
     :param uri: the uri to check
     :type uri: str
-    :return: True of uri is ok, else False"""
-    if uri.startswith("urn:"):
-        uri = "http://make.safe/" + uri
-    return bool(validators.url(uri))
+    :return: True if uri is ok, else False"""
+    return bool(
+        (uri.startswith("urn:") and check_valid_urn(uri))
+        or check_valid_url(uri)
+    )
 
 
 def clean_uri_str(uri: str, smart: bool = False) -> str:
     """Escapes unacceptable chars in a URI.
     :param smart: (optional) flag indicating smart-mode of operation.
-      Beinfg 'smart' indicates the routine will only clean if it is
-      needed. In other words: if True this does no cleaning is the
+      Being 'smart' indicates the routine will only clean if it is
+      needed. In other words: if True this does no cleaning in case the
       uri checks out to be already valid
-      - defaults to False, so executes a forced cleaning
+      - defaults to False, so it executes a forced cleaning
       Note that smart=True should make the result idempotent,
       the non-smart-mode does not offer that guarantee.
-      Both guarantee a valid uri output though.
+      Both modes guarantee a valid uri output though.
     """
     if smart and check_valid_uri(uri):
         return uri

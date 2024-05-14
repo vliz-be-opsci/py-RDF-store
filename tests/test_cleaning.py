@@ -11,6 +11,8 @@ from pyrdfstore.clean import (
     Level,
     build_clean_chain,
     check_valid_uri,
+    check_valid_url,
+    check_valid_urn,
     clean_graph,
     clean_uri_node,
     clean_uri_str,
@@ -95,6 +97,36 @@ def test_clean_uri_str():
     assert (
         smart_safe == smart_safe_again
     ), "smart cleaning should be idempotent"
+
+
+def test_check_ur_inl_str():
+    badany = (
+        "",
+        "urn",
+        "urn:",
+        "urn:x:abc",
+        "urn:xy:",
+    )
+    goodurn = (
+        "urn:xy:ab",
+        "urn:urn:urn",
+    )
+    goodurl = ("https://example.org/path.ext?pk=v#fragment",)
+
+    for ba in badany:
+        assert not check_valid_urn(ba)
+        assert not check_valid_url(ba)
+        assert not check_valid_uri(ba)
+
+    for gn in goodurn:
+        assert check_valid_urn(gn)
+        assert not check_valid_url(gn)
+        assert check_valid_uri(gn)
+
+    for gl in goodurl:
+        assert not check_valid_urn(gl)
+        assert check_valid_url(gl)
+        assert check_valid_uri(gl)
 
 
 def test_clean_uri_node():
