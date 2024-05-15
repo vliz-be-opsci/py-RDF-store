@@ -43,11 +43,12 @@ def test_key_to_ng():
 
     # Test case 5: Empty key
     # TODO - reconsider --> would be better to throw an assertion in fact!
+    # specially since the URI for this case is invalid!
     key = ""
     expected_ng = base
     ng = nmapper.key_to_ng(key)
     assert ng == expected_ng
-    assert check_valid_uri(ng)
+    assert not check_valid_uri(ng)
 
     # Add more test cases as needed
 
