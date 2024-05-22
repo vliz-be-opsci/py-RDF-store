@@ -7,7 +7,7 @@ authors = ["Open Science Team of the Flanders Marine Institute, VLIZ vzw <opsci@
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0.0"
 rdflib = "*"
-validators = "^0.22.0"
+validators = "^0.28.0"
 sparqlwrapper = "^2.0.0"
 sphinx-rtd-theme = "^2.0.0"
 recommonmark = "^0.7.1"
